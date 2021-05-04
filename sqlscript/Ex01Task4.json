@@ -1,0 +1,20 @@
+{
+	"name": "Ex01Task4",
+	"properties": {
+		"folder": {
+			"name": "Module 07"
+		},
+		"content": {
+			"query": "COPY INTO wwi_staging.Sale\nFROM 'https://asadatalakedp210504.dfs.core.windows.net/wwi-02/sale-small/Year=2019'\nWITH (\n    FILE_TYPE = 'PARQUET',\n    COMPRESSION = 'SNAPPY'\n)\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
