@@ -1,0 +1,15 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "asaworkspace356813"
+		},
+		"asaworkspace356813-WorkspaceDefaultSqlServer_connectionString": {
+			"value": ""
+		},
+		"asaworkspace356813-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://asadatalake356813.dfs.core.windows.net"
+		}
+	}
+}
