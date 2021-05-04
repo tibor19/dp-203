@@ -1,5 +1,5 @@
 {
-	"name": "asacosmosdb01",
+	"name": "asal400_customerprofile_cosmosdb",
 	"properties": {
 		"linkedServiceName": {
 			"referenceName": "asacosmosdb01",
