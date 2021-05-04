@@ -1,0 +1,20 @@
+{
+	"name": "Lab01Ex01Task3",
+	"properties": {
+		"folder": {
+			"name": "Module 10"
+		},
+		"content": {
+			"query": "SELECT COUNT(DISTINCT CustomerId) from wwi_poc.Sale\nGO\n\nSELECT APPROX_COUNT_DISTINCT(CustomerId) from wwi_poc.Sale\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
