@@ -1,0 +1,20 @@
+{
+	"name": "Lab01Ex01Task2",
+	"properties": {
+		"folder": {
+			"name": "Module 10"
+		},
+		"content": {
+			"query": "SELECT\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  SUM(Quantity) OVER(PARTITION BY Region) AS Total,  \n  AVG(Quantity) OVER(PARTITION BY Region) AS Avg,  \n  COUNT(Quantity) OVER(PARTITION BY Region) AS Count,  \n  MIN(Quantity) OVER(PARTITION BY Region) AS Min,  \n  MAX(Quantity) OVER(PARTITION BY Region) AS Max,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\n-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category\nGO\n\n--LAG Function\nSELECT ProductId,\n    [Hour],\n    [HourSalesTotal],\n    LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS PreviousHouseSalesTotal,\n    [HourSalesTotal] - LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS Diff\nFROM ( \n    SELECT ProductId,\n        [Hour],\n        SUM(TotalAmount) AS HourSalesTotal\n    FROM [wwi_perf].[Sale_Index]\n    WHERE ProductId = 3848 AND [Hour] BETWEEN 8 AND 20\n    GROUP BY ProductID, [Hour]) as HourTotals\nGO\n\n-- ROWS UNBOUNDED PRECEDING\nSELECT DISTINCT bc.Country, b.Title AS Book, bc.Downloads\n    ,FIRST_VALUE(b.Title) OVER (PARTITION BY Country  \n        ORDER BY Downloads ASC ROWS UNBOUNDED PRECEDING) AS FewestDownloads\nFROM dbo.BookConsumption AS bc\nINNER JOIN dbo.Books AS b\n    ON b.ID = bc.BookID\nORDER BY Country, Downloads\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
