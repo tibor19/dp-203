@@ -1,0 +1,398 @@
+{
+	"name": "Find Top Products",
+	"properties": {
+		"folder": {
+			"name": "Module 09"
+		},
+		"nbformat": 4,
+		"nbformat_minor": 2,
+		"bigDataPool": {
+			"referenceName": "SparkPool01",
+			"type": "BigDataPoolReference"
+		},
+		"sessionProperties": {
+			"driverMemory": "28g",
+			"driverCores": 4,
+			"executorMemory": "28g",
+			"executorCores": 4,
+			"numExecutors": 2,
+			"conf": {
+				"spark.dynamicAllocation.enabled": "false",
+				"spark.dynamicAllocation.minExecutors": "2",
+				"spark.dynamicAllocation.maxExecutors": "2"
+			}
+		},
+		"metadata": {
+			"saveOutput": true,
+			"synapse_widget": {
+				"version": "0.1",
+				"state": {
+					"8c783826-65a9-4e42-a096-f24e0f2d2a16": {
+						"type": "Synapse.DataFrame",
+						"sync_state": {
+							"table": {
+								"rows": [
+									{
+										"visitorId": 80451,
+										"isPreferredProduct": false,
+										"productId": 1815,
+										"itemsPurchasedLast12Months": 46,
+										"userId": 80451,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 626,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 3388,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 3467,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 1998,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 665,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 924,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 1546,
+										"isPreferredProduct": true,
+										"productId": 2973,
+										"itemsPurchasedLast12Months": 15,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 626,
+										"isPreferredProduct": true,
+										"productId": 2156,
+										"itemsPurchasedLast12Months": 31,
+										"userId": 80579,
+										"isTopProduct": true
+									},
+									{
+										"visitorId": 80579,
+										"preferredProductId": 3388,
+										"isPreferredProduct": true,
+										"productId": 2156,
+										"itemsPurchasedLast12Months": 31,
+										"userId": 80579,
+										"isTopProduct": true
+									}
+								],
+								"schema": {
+									"visitorId": "int",
+									"productId": "int",
+									"itemsPurchasedLast12Months": "int",
+									"preferredProductId": "int",
+									"userId": "int",
+									"isTopProduct": "boolean",
+									"isPreferredProduct": "boolean"
+								}
+							},
+							"isSummary": false,
+							"language": "scala"
+						},
+						"persist_state": {
+							"view": {
+								"type": "details",
+								"chartOptions": {
+									"chartType": "bar",
+									"aggregationType": "sum",
+									"categoryFieldKeys": [
+										"productId"
+									],
+									"seriesFieldKeys": [
+										"visitorId"
+									],
+									"isStacked": false
+								}
+							}
+						}
+					}
+				}
+			},
+			"kernelspec": {
+				"name": "synapse_pyspark",
+				"display_name": "Synapse PySpark"
+			},
+			"language_info": {
+				"name": "python"
+			},
+			"a365ComputeOptions": {
+				"id": "/subscriptions/bcb37011-c12a-48b8-a476-f3bd7895ffd6/resourceGroups/rg-dp-203-03/providers/Microsoft.Synapse/workspaces/asaworkspacedp210504/bigDataPools/SparkPool01",
+				"name": "SparkPool01",
+				"type": "Spark",
+				"endpoint": "https://asaworkspacedp210504.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkPool01",
+				"auth": {
+					"type": "AAD",
+					"authResource": "https://dev.azuresynapse.net"
+				},
+				"sparkVersion": "2.4",
+				"nodeCount": 3,
+				"cores": 4,
+				"memory": 28,
+				"automaticScaleJobs": false
+			},
+			"sessionKeepAliveTimeout": 30
+		},
+		"cells": [
+			{
+				"cell_type": "code",
+				"metadata": {
+					"microsoft": {
+						"language": "python"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%pyspark\r\n",
+					"df = spark.read.load('abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net/top-products/*.parquet', format='parquet')\r\n",
+					"display(df.limit(10))"
+				],
+				"execution_count": 1
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true
+				},
+				"source": [
+					"topPurchases = df.select(\r\n",
+					"    \"UserId\", \"ProductId\",\r\n",
+					"    \"ItemsPurchasedLast12Months\", \"IsTopProduct\",\r\n",
+					"    \"IsPreferredProduct\")\r\n",
+					"\r\n",
+					"# Populate a temporary view so we can query from SQL\r\n",
+					"topPurchases.createOrReplaceTempView(\"top_purchases\")\r\n",
+					"\r\n",
+					"topPurchases.show(100)"
+				],
+				"execution_count": 2
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true
+				},
+				"source": [
+					"from pyspark.sql.functions import *\r\n",
+					"\r\n",
+					"topPreferredProducts = (topPurchases\r\n",
+					"    .filter( col(\"IsTopProduct\") == True)\r\n",
+					"    .filter( col(\"IsPreferredProduct\") == True)\r\n",
+					"    .orderBy( col(\"ItemsPurchasedLast12Months\").desc() ))\r\n",
+					"\r\n",
+					"topPreferredProducts.show(100)"
+				],
+				"execution_count": 3
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "sparksql"
+					},
+					"collapsed": false
+				},
+				"source": [
+					"%%sql\r\n",
+					"\r\n",
+					"CREATE OR REPLACE TEMPORARY VIEW top_5_products\r\n",
+					"AS\r\n",
+					"    select UserId, ProductId, ItemsPurchasedLast12Months\r\n",
+					"    from (select *,\r\n",
+					"                row_number() over (partition by UserId order by ItemsPurchasedLast12Months desc) as seqnum\r\n",
+					"        from top_purchases\r\n",
+					"        ) a\r\n",
+					"    where seqnum <= 5 and IsTopProduct == true and IsPreferredProduct = true\r\n",
+					"    order by a.UserId"
+				],
+				"execution_count": 4
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true
+				},
+				"source": [
+					"top5Products = sqlContext.table(\"top_5_products\")\r\n",
+					"\r\n",
+					"top5Products.show(100)"
+				],
+				"execution_count": 5
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true
+				},
+				"source": [
+					"print('before filter: ', topPreferredProducts.count(), ', after filter: ', top5Products.count())"
+				],
+				"execution_count": 6
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true
+				},
+				"source": [
+					"top5ProductsOverall = (top5Products.select(\"ProductId\",\"ItemsPurchasedLast12Months\")\r\n",
+					"    .groupBy(\"ProductId\")\r\n",
+					"    .agg( sum(\"ItemsPurchasedLast12Months\").alias(\"Total\") )\r\n",
+					"    .orderBy( col(\"Total\").desc() )\r\n",
+					"    .limit(5))\r\n",
+					"\r\n",
+					"top5ProductsOverall.show()"
+				],
+				"execution_count": 7
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"collapsed": true,
+					"tags": [
+						"parameters"
+					]
+				},
+				"source": [
+					"import uuid\r\n",
+					"\r\n",
+					"# Generate random GUID\r\n",
+					"runId = uuid.uuid4()"
+				],
+				"execution_count": 8
+			},
+			{
+				"cell_type": "code",
+				"metadata": {
+					"jupyter": {
+						"source_hidden": false,
+						"outputs_hidden": false
+					},
+					"nteract": {
+						"transient": {
+							"deleting": false
+						}
+					},
+					"microsoft": {
+						"language": "python"
+					},
+					"collapsed": true
+				},
+				"source": [
+					"%%pyspark\r\n",
+					"\r\n",
+					"top5ProductsOverall.write.parquet('abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net/top5-products/' + str(runId) + '.parquet')"
+				],
+				"execution_count": 9
+			}
+		]
+	}
+}

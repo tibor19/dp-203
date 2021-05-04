@@ -1,6 +1,9 @@
 {
 	"name": "user_profiles_to_datalake",
 	"properties": {
+		"folder": {
+			"name": "Module 09"
+		},
 		"type": "MappingDataFlow",
 		"typeProperties": {
 			"sources": [
