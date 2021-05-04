@@ -1,0 +1,15 @@
+{
+	"name": "write_user_profile_to_asa",
+	"properties": {
+		"folder": {
+			"name": "Module 08"
+		},
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [],
+			"sinks": [],
+			"transformations": [],
+			"script": ""
+		}
+	}
+}

@@ -2,7 +2,7 @@
 	"name": "asal400_ecommerce_userprofiles_source",
 	"properties": {
 		"linkedServiceName": {
-			"referenceName": "asaworkspace356813-WorkspaceDefaultStorage",
+			"referenceName": "asadatalakedp210504",
 			"type": "LinkedServiceReference"
 		},
 		"folder": {
