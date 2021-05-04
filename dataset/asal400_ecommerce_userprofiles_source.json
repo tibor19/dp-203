@@ -1,0 +1,43 @@
+{
+	"name": "asal400_ecommerce_userprofiles_source",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "asaworkspace356813-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"folder": {
+			"name": "Module 08"
+		},
+		"annotations": [],
+		"type": "Json",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": "online-user-profiles-02",
+				"fileSystem": "wwi-02"
+			}
+		},
+		"schema": {
+			"type": "object",
+			"properties": {
+				"visitorId": {
+					"type": "integer"
+				},
+				"topProductPurchases": {
+					"type": "array",
+					"items": {
+						"type": "object",
+						"properties": {
+							"productId": {
+								"type": "integer"
+							},
+							"itemsPurchasedLast12Months": {
+								"type": "integer"
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+}
