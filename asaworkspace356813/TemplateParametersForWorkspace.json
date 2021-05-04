@@ -5,6 +5,9 @@
 		"workspaceName": {
 			"value": "asaworkspace356813"
 		},
+		"asacosmosdb01_connectionString": {
+			"value": ""
+		},
 		"asaworkspace356813-WorkspaceDefaultSqlServer_connectionString": {
 			"value": ""
 		},
