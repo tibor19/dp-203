@@ -69,6 +69,185 @@
 	},
 	"resources": [
 		{
+			"name": "[concat(parameters('workspaceName'), '/Copy December Sales')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy Sales",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "SqlDWSink",
+								"preCopyScript": "TRUNCATE TABLE wwi_perf.Sale_Heap",
+								"allowPolyBase": true,
+								"polyBaseSettings": {
+									"rejectValue": 0,
+									"rejectType": "value",
+									"useTypeDefault": true
+								},
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"dataIntegrationUnits": 8,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "TransactionId",
+											"type": "String"
+										},
+										"sink": {
+											"name": "TransactionId",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerId",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "CustomerId",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductId",
+											"type": "Int16"
+										},
+										"sink": {
+											"name": "ProductId",
+											"type": "Int16"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "Price",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "Price",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "TotalAmount",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "TotalAmount",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "TransactionDate",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "TransactionDateId",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ProfitAmount",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "ProfitAmount",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "Hour",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Hour",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "Minute",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Minute",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "StoreId",
+											"type": "Int16"
+										},
+										"sink": {
+											"name": "StoreId",
+											"type": "Int16"
+										}
+									}
+								]
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "asal400_december_sales",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "asal400_saleheap_asa",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_december_sales')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_saleheap_asa')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Lab 08 - Execute Business Analyst Queries')]",
 			"type": "Microsoft.Synapse/workspaces/pipelines",
 			"apiVersion": "2019-06-01-preview",
@@ -274,6 +453,83 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_december_sales')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "asadatalakedp210504",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "sale-20161230-snappy.parquet",
+						"folderPath": "campaign-analytics",
+						"fileSystem": "wwi-02"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "UTF8"
+					},
+					{
+						"name": "CustomerId",
+						"type": "INT32"
+					},
+					{
+						"name": "ProductId",
+						"type": "INT_16"
+					},
+					{
+						"name": "Quantity",
+						"type": "INT_8"
+					},
+					{
+						"name": "Price",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "TotalAmount",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "TransactionDate",
+						"type": "INT32"
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "Hour",
+						"type": "INT_8"
+					},
+					{
+						"name": "Minute",
+						"type": "INT_8"
+					},
+					{
+						"name": "StoreId",
+						"type": "INT_16"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/asal400_ecommerce_userprofiles_source')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
@@ -319,6 +575,85 @@
 			},
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/linkedServices/asaworkspace356813-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_saleheap_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01_import01",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "CustomerId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductId",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Quantity",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Price",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TotalAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TransactionDateId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "Hour",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Minute",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "StoreId",
+						"type": "smallint",
+						"precision": 5
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi_perf",
+					"table": "Sale_Heap"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01_import01')]"
 			]
 		},
 		{
@@ -864,7 +1199,7 @@
 					"name": "Module 07"
 				},
 				"content": {
-					"query": "-- Replace SUFFIX with the lab workspace id.\nCREATE EXTERNAL DATA SOURCE ABSS\nWITH\n( TYPE = HADOOP,\n    LOCATION = 'abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net'\n);\nGO\n\nCREATE EXTERNAL FILE FORMAT [ParquetFormat]\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)\nGO\n\nCREATE SCHEMA [wwi_external];\nGO\n\nCREATE EXTERNAL TABLE [wwi_external].Sales\n    (\n        [TransactionId] [nvarchar](36)  NOT NULL,\n        [CustomerId] [int]  NOT NULL,\n        [ProductId] [smallint]  NOT NULL,\n        [Quantity] [smallint]  NOT NULL,\n        [Price] [decimal](9,2)  NOT NULL,\n        [TotalAmount] [decimal](9,2)  NOT NULL,\n        [TransactionDate] [int]  NOT NULL,\n        [ProfitAmount] [decimal](9,2)  NOT NULL,\n        [Hour] [tinyint]  NOT NULL,\n        [Minute] [tinyint]  NOT NULL,\n        [StoreId] [smallint]  NOT NULL\n    )\nWITH\n    (\n        LOCATION = '/sale-small/Year=2019',  \n        DATA_SOURCE = ABSS,\n        FILE_FORMAT = [ParquetFormat]  \n    )  \nGO\n\n-- SELECT count(*) FROM [wwi_external].[Sales]\n\n\nINSERT INTO [wwi_staging].[SaleHeap]\nSELECT *\nFROM [wwi_external].[Sales]",
+					"query": "-- Replace SUFFIX with the lab workspace id.\nCREATE EXTERNAL DATA SOURCE ABSS\nWITH\n( TYPE = HADOOP,\n    LOCATION = 'abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net'\n);\nGO\n\nCREATE EXTERNAL FILE FORMAT [ParquetFormat]\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)\nGO\n\nCREATE SCHEMA [wwi_external];\nGO\n\nCREATE EXTERNAL TABLE [wwi_external].Sales\n    (\n        [TransactionId] [nvarchar](36)  NOT NULL,\n        [CustomerId] [int]  NOT NULL,\n        [ProductId] [smallint]  NOT NULL,\n        [Quantity] [smallint]  NOT NULL,\n        [Price] [decimal](9,2)  NOT NULL,\n        [TotalAmount] [decimal](9,2)  NOT NULL,\n        [TransactionDate] [int]  NOT NULL,\n        [ProfitAmount] [decimal](9,2)  NOT NULL,\n        [Hour] [tinyint]  NOT NULL,\n        [Minute] [tinyint]  NOT NULL,\n        [StoreId] [smallint]  NOT NULL\n    )\nWITH\n    (\n        LOCATION = '/sale-small/Year=2019',  \n        DATA_SOURCE = ABSS,\n        FILE_FORMAT = [ParquetFormat]  \n    )  \nGO\n\nINSERT INTO [wwi_staging].[SaleHeap]\nSELECT *\nFROM [wwi_external].[Sales]\n\nSELECT count(1) FROM [wwi_staging].[SaleHeap]",
 					"metadata": {
 						"language": "sql"
 					},
@@ -957,6 +1292,29 @@
 				},
 				"content": {
 					"query": "CREATE EXTERNAL FILE FORMAT csv_dailysales\nWITH (\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS (\n        FIELD_TERMINATOR = '.',\n        DATE_FORMAT = '',\n        USE_TYPE_DEFAULT = False\n    )\n);\nGO\n\nCREATE EXTERNAL TABLE [wwi_external].DailySalesCounts\n    (\n        [Date] [int]  NOT NULL,\n        [NorthAmerica] [int]  NOT NULL,\n        [SouthAmerica] [int]  NOT NULL,\n        [Europe] [int]  NOT NULL,\n        [Africa] [int]  NOT NULL,\n        [Asia] [int]  NOT NULL\n    )\nWITH\n    (\n        LOCATION = '/campaign-analytics/dailycounts.txt',  \n        DATA_SOURCE = ABSS,\n        FILE_FORMAT = csv_dailysales\n    )  \nGO\nINSERT INTO [wwi_staging].[DailySalesCounts]\nSELECT *\nFROM [wwi_external].[DailySalesCounts]\n\n\nSELECT * FROM [wwi_staging].[DailySalesCounts]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Ex02Task1')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE group_name = 'BigDataLoad')\nBEGIN\n    CREATE WORKLOAD GROUP BigDataLoad WITH  \n    (\n        MIN_PERCENTAGE_RESOURCE = 50 -- integer value\n        ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 25 --  (guaranteed a minimum of 4 concurrency)\n        ,CAP_PERCENTAGE_RESOURCE = 100\n    );\nEND\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE [name] = 'HeavyLoader')\nBEGIN\n    CREATE WORKLOAD Classifier HeavyLoader WITH\n    (\n        Workload_Group ='BigDataLoad',\n        MemberName='asa.sql.import01',\n        IMPORTANCE = HIGH\n    );\nEND\n\nSELECT * FROM sys.workload_management_workload_classifiers\n\nGO",
 					"metadata": {
 						"language": "sql"
 					},
