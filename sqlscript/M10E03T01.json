@@ -1,0 +1,20 @@
+{
+	"name": "M10E03T01",
+	"properties": {
+		"folder": {
+			"name": "Module 10"
+		},
+		"content": {
+			"query": "SELECT  \n    COUNT_BIG(*)\nFROM\n    [wwi_poc].[Sale]\nGO\n\nSELECT TOP 1000 * FROM\n(\n    SELECT\n        S.CustomerId\n        ,SUM(S.TotalAmount) as TotalAmount\n    FROM\n        [wwi_poc].[Sale] S\n    GROUP BY\n        S.CustomerId\n) T\nOPTION (LABEL = 'Lab: Heap')\nGO\n\nSELECT  *\nFROM    sys.dm_pdw_exec_requests\nWHERE   [label] = 'Lab: Heap';\nGO\n\nCREATE TABLE [wwi_poc].[Sale]\n( \n    [TransactionId] [uniqueidentifier]  NOT NULL,\n    [CustomerId] [int]  NOT NULL,\n    [ProductId] [smallint]  NOT NULL,\n    [Quantity] [tinyint]  NOT NULL,\n    [Price] [decimal](9,2)  NOT NULL,\n    [TotalAmount] [decimal](9,2)  NOT NULL,\n    [TransactionDateId] [int]  NOT NULL,\n    [ProfitAmount] [decimal](9,2)  NOT NULL,\n    [Hour] [tinyint]  NOT NULL,\n    [Minute] [tinyint]  NOT NULL,\n    [StoreId] [smallint]  NOT NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    HEAP\n)\nGO\n\nEXPLAIN WITH_RECOMMENDATIONS\nSELECT TOP 1000 * FROM\n(\n    SELECT\n        S.CustomerId\n        ,SUM(S.TotalAmount) as TotalAmount\n    FROM\n        [wwi_poc].[Sale] S\n    GROUP BY\n        S.CustomerId\n) T\n\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
