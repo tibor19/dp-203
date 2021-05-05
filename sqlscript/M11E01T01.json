@@ -5,7 +5,7 @@
 			"name": "Module 11"
 		},
 		"content": {
-			"query": "IF OBJECT_ID(N'[wwi_perf].[Sale_Hash]', N'U') IS NULL\nBEGIN\n   CREATE TABLE [wwi_perf].[Sale_Hash]\n   WITH\n   (\n       DISTRIBUTION = HASH ( [CustomerId] ),\n       CLUSTERED COLUMNSTORE INDEX\n   )\n   AS\n   SELECT\n       *\n   FROM\n       [wwi_poc].[Sale]\nEND\nGO\n\nDBCC PDW_SHOWSPACEUSED('wwi_perf.Sale_Hash');\nGO\n\nSELECT  \n    *\nFROM    \n    sys.dm_pdw_exec_requests\nWHERE   \n    [label] = 'Lab: Heap'\n\nGO",
+			"query": "IF OBJECT_ID(N'[wwi_perf].[Sale_Hash]', N'U') IS NULL\nBEGIN\n   CREATE TABLE [wwi_perf].[Sale_Hash]\n   WITH\n   (\n       DISTRIBUTION = HASH ( [CustomerId] ),\n       CLUSTERED COLUMNSTORE INDEX\n   )\n   AS\n   SELECT\n       *\n   FROM\n       [wwi_poc].[Sale]\nEND\nGO\n\nDBCC PDW_SHOWSPACEUSED('wwi_perf.Sale_Hash');\nGO\n\nSELECT TOP 1000\n    CustomerId,\n    count(*) as TransactionItemsCount\nFROM\n    [wwi_perf].[Sale_Hash]\nGROUP BY\n    CustomerId\nORDER BY\n    count(*) ASC\nGO\n\nSELECT\n    T.TransactionItemsCountBucket\n    ,count(*) as CustomersCount\nFROM\n    (\n        SELECT\n            CustomerId,\n            (count(*) - 62) / 100 as TransactionItemsCountBucket\n        FROM\n            [wwi_perf].[Sale_Hash]\n        GROUP BY\n            CustomerId\n    ) T\nGROUP BY\n    T.TransactionItemsCountBucket\nORDER BY\n    T.TransactionItemsCountBucket\n\nGO\n\n\nSELECT  \n    *\nFROM    \n    sys.dm_pdw_exec_requests\nWHERE   \n    [label] = 'Lab: Heap'\n\nGO",
 			"metadata": {
 				"language": "sql"
 			},
