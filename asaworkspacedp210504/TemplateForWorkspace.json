@@ -1925,6 +1925,121 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "IF OBJECT_ID(N'[dbo].[Category]', N'U') IS NOT NULL\nDROP TABLE [dbo].[Category]\n\nCREATE TABLE [dbo].[Category]\n( \n    [ID] [float]  NOT NULL,\n    [Category] [varchar](255)  NULL,\n    [SubCategory] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[Books]', N'U') IS NOT NULL\nDROP TABLE [dbo].[Books]\n\nCREATE TABLE [dbo].[Books]\n( \n    [ID] [float]  NOT NULL,\n    [BookListID] [float]  NULL,\n    [Title] [varchar](255)  NULL,\n    [Author] [varchar](255)  NULL,\n    [Duration] [float]  NULL,\n    [Image] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[BookConsumption]', N'U') IS NOT NULL\nDROP TABLE [dbo].[BookConsumption]\n\nCREATE TABLE [dbo].[BookConsumption]\n( \n    [BookID] [float]  NULL,\n    [Clicks] [float]  NULL,\n    [Downloads] [float]  NULL,\n    [Time Spent] [float]  NULL,\n    [Country] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[BookList]', N'U') IS NOT NULL\nDROP TABLE [dbo].[BookList]\n\nCREATE TABLE [dbo].[BookList]\n( \n    [ID] [float]  NOT NULL,\n    [CategoryID] [float]  NULL,\n    [BookList] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nCOPY INTO Category \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/Category.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO Books \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/Books.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO BookConsumption \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/BookConsumption.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO BookList \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/BookList.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "SELECT\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  SUM(Quantity) OVER(PARTITION BY Region) AS Total,  \n  AVG(Quantity) OVER(PARTITION BY Region) AS Avg,  \n  COUNT(Quantity) OVER(PARTITION BY Region) AS Count,  \n  MIN(Quantity) OVER(PARTITION BY Region) AS Min,  \n  MAX(Quantity) OVER(PARTITION BY Region) AS Max,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\n-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category\nGO\n\n--LAG Function\nSELECT ProductId,\n    [Hour],\n    [HourSalesTotal],\n    LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS PreviousHouseSalesTotal,\n    [HourSalesTotal] - LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS Diff\nFROM ( \n    SELECT ProductId,\n        [Hour],\n        SUM(TotalAmount) AS HourSalesTotal\n    FROM [wwi_perf].[Sale_Index]\n    WHERE ProductId = 3848 AND [Hour] BETWEEN 8 AND 20\n    GROUP BY ProductID, [Hour]) as HourTotals\nGO\n\n-- ROWS UNBOUNDED PRECEDING\nSELECT DISTINCT bc.Country, b.Title AS Book, bc.Downloads\n    ,FIRST_VALUE(b.Title) OVER (PARTITION BY Country  \n        ORDER BY Downloads ASC ROWS UNBOUNDED PRECEDING) AS FewestDownloads\nFROM dbo.BookConsumption AS bc\nINNER JOIN dbo.Books AS b\n    ON b.ID = bc.BookID\nORDER BY Country, Downloads\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "SELECT COUNT(DISTINCT CustomerId) from wwi_poc.Sale\nGO\n\nSELECT APPROX_COUNT_DISTINCT(CustomerId) from wwi_poc.Sale\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E02T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "--First, let's confirm that there are no queries currently being run by users logged in workload01 or workload02\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, \nstart_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') \n--and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,s.login_name\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,status\nGO\n\nIF EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE name = 'CEO')\nBEGIN\n    DROP WORKLOAD CLASSIFIER CEO;\nEND\nCREATE WORKLOAD CLASSIFIER CEO\n  WITH (WORKLOAD_GROUP = 'largerc'\n  ,MEMBERNAME = 'asa.sql.workload01',IMPORTANCE = High);\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,status desc\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E02T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.workload_management_workload_groups where name = 'CEODemo')\nBEGIN\n    Create WORKLOAD GROUP CEODemo WITH  \n    ( MIN_PERCENTAGE_RESOURCE = 50        -- integer value\n    ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 25 --  \n    ,CAP_PERCENTAGE_RESOURCE = 100\n    )\nEND\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers where  name = 'CEODreamDemo')\nBEGIN\n    Create Workload Classifier CEODreamDemo with\n    ( Workload_Group ='CEODemo',MemberName='asa.sql.workload02',IMPORTANCE = BELOW_NORMAL);\nEND\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s\nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload02') and Importance is not NULL AND r.[status] in ('Running','Suspended')\nORDER BY submit_time, status\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s\nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload02') and Importance is not NULL AND r.[status] in ('Running','Suspended')\nORDER BY submit_time, status\nGO\n\nIF  EXISTS (SELECT * FROM sys.workload_management_workload_classifiers where group_name = 'CEODemo')\nBEGIN\n    Drop Workload Classifier CEODreamDemo\n    DROP WORKLOAD GROUP CEODemo\nEND\n--- Creates a workload group 'CEODemo'.\nCreate  WORKLOAD GROUP CEODemo WITH  \n(\n    MIN_PERCENTAGE_RESOURCE = 26 -- integer value\n    ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 3.25 -- factor of 26 (guaranteed more than 4 concurrencies)\n    ,CAP_PERCENTAGE_RESOURCE = 100\n)\n--- Creates a workload Classifier 'CEODreamDemo'.\nCreate Workload Classifier CEODreamDemo with\n(Workload_Group ='CEODemo',MemberName='asa.sql.workload02',IMPORTANCE = BELOW_NORMAL);\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/Calculate Top 5 Products')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -1954,11 +2069,137 @@
 					"saveOutput": true,
 					"synapse_widget": {
 						"version": "0.1",
-						"state": {}
+						"state": {
+							"8c783826-65a9-4e42-a096-f24e0f2d2a16": {
+								"type": "Synapse.DataFrame",
+								"sync_state": {
+									"table": {
+										"rows": [
+											{
+												"visitorId": 80451,
+												"isPreferredProduct": false,
+												"productId": 1815,
+												"itemsPurchasedLast12Months": 46,
+												"userId": 80451,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 626,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3388,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3467,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 1998,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 665,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 924,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 1546,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 626,
+												"isPreferredProduct": true,
+												"productId": 2156,
+												"itemsPurchasedLast12Months": 31,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3388,
+												"isPreferredProduct": true,
+												"productId": 2156,
+												"itemsPurchasedLast12Months": 31,
+												"userId": 80579,
+												"isTopProduct": true
+											}
+										],
+										"schema": {
+											"visitorId": "int",
+											"productId": "int",
+											"itemsPurchasedLast12Months": "int",
+											"preferredProductId": "int",
+											"userId": "int",
+											"isTopProduct": "boolean",
+											"isPreferredProduct": "boolean"
+										}
+									},
+									"isSummary": false,
+									"language": "scala"
+								},
+								"persist_state": {
+									"view": {
+										"type": "details",
+										"chartOptions": {
+											"chartType": "bar",
+											"aggregationType": "sum",
+											"categoryFieldKeys": [
+												"productId"
+											],
+											"seriesFieldKeys": [
+												"visitorId"
+											],
+											"isStacked": false
+										}
+									}
+								}
+							}
+						}
 					},
 					"kernelspec": {
 						"name": "synapse_pyspark",
-						"display_name": "python"
+						"display_name": "Synapse PySpark"
 					},
 					"language_info": {
 						"name": "python"
@@ -1975,10 +2216,8 @@
 						"sparkVersion": "2.4",
 						"nodeCount": 3,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": false
-					},
-					"sessionKeepAliveTimeout": 30
+						"memory": 28
+					}
 				},
 				"cells": [
 					{
