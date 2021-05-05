@@ -1,0 +1,20 @@
+{
+	"name": "M11E03T01",
+	"properties": {
+		"folder": {
+			"name": "Module 11"
+		},
+		"content": {
+			"query": "CREATE TABLE [wwi_perf].[Sale_Hash_Projection]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tHEAP\n)\nAS\nSELECT\n\t[CustomerId]\n\t,[ProductId]\n\t,[Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection2]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tCLUSTERED COLUMNSTORE INDEX\n)\nAS\nSELECT\n\t[CustomerId]\n\t,[ProductId]\n\t,[Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\nGO\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection_Big]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tHEAP\n)\nAS\nSELECT\n\t[CustomerId]\n\t,CAST([ProductId] as bigint) as [ProductId]\n\t,CAST([Quantity] as bigint) as [Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection_Big2]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tCLUSTERED COLUMNSTORE INDEX\n)\nAS\nSELECT\n\t[CustomerId]\n\t,CAST([ProductId] as bigint) as [ProductId]\n\t,CAST([Quantity] as bigint) as [Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\nGO\n\nSELECT 'Sale_Hash_Projection', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection]\nUNION\nSELECT 'Sale_Hash_Projection2', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection2]\nUNION\nSELECT 'Sale_Hash_Projection_Big', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection_Big]\nUNION\nSELECT 'Sale_Hash_Projection_Big2', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection_Big2]\nGO\n\nSELECT\n    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\n,    COUNT(distinct partition_nmbr) as nbr_partitions\n,    SUM(row_count)                 as table_row_count\n,    SUM(reserved_space_GB)         as table_reserved_space_GB\n,    SUM(data_space_GB)             as table_data_space_GB\n,    SUM(index_space_GB)            as table_index_space_GB\n,    SUM(unused_space_GB)           as table_unused_space_GB\nFROM\n    [wwi_perf].[vTableSizes]\nWHERE\n    schema_name = 'wwi_perf'\n    and table_name in ('Sale_Hash_Projection', 'Sale_Hash_Projection2',\n        'Sale_Hash_Projection_Big', 'Sale_Hash_Projection_Big2')\nGROUP BY\n    database_name\n,    schema_name\n,    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\nORDER BY\n    table_data_space_GB desc",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
