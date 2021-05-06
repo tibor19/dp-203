@@ -2712,6 +2712,98 @@
 				}
 			},
 			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M17E01T06')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 17"
+				},
+				"content": {
+					"query": "SELECT count(*) FROM\n(\n    SELECT\n        FS.CustomerID\n        ,P.Seasonality\n        ,D.Year\n        ,D.Quarter\n        ,D.Month\n        ,avg(FS.TotalAmount) as AvgTotalAmount\n        ,avg(FS.ProfitAmount) as AvgProfitAmount\n        ,sum(FS.TotalAmount) as TotalAmount\n        ,sum(FS.ProfitAmount) as ProfitAmount\n    FROM\n        wwi.SaleSmall FS\n        JOIN wwi.Product P ON P.ProductId = FS.ProductId\n        JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\n    GROUP BY\n        FS.CustomerID\n        ,P.Seasonality\n        ,D.Year\n        ,D.Quarter\n        ,D.Month\n) T",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M17E02T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 17"
+				},
+				"content": {
+					"query": "EXPLAIN\nSELECT * FROM\n(\n    SELECT\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n    ,avg(FS.TotalAmount) as AvgTotalAmount\n    ,avg(FS.ProfitAmount) as AvgProfitAmount\n    ,sum(FS.TotalAmount) as TotalAmount\n    ,sum(FS.ProfitAmount) as ProfitAmount\nFROM\n    wwi.SaleSmall FS\n    JOIN wwi.Product P ON P.ProductId = FS.ProductId\n    JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\nGROUP BY\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n) T\nGO\n\nIF EXISTS(select * FROM sys.views where name = 'mvCustomerSales')\n    DROP VIEW wwi_perf.mvCustomerSales\n    GO\n\nCREATE MATERIALIZED VIEW\n    wwi_perf.mvCustomerSales\nWITH\n(\n    DISTRIBUTION = HASH( CustomerId )\n)\nAS\nSELECT\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n    ,avg(FS.TotalAmount) as AvgTotalAmount\n    ,avg(FS.ProfitAmount) as AvgProfitAmount\n    ,sum(FS.TotalAmount) as TotalAmount\n    ,sum(FS.ProfitAmount) as ProfitAmount\nFROM\n    wwi.SaleSmall FS\n    JOIN wwi.Product P ON P.ProductId = FS.ProductId\n    JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\nGROUP BY\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M17E02T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 17"
+				},
+				"content": {
+					"query": "SELECT\n    name\n    ,is_result_set_caching_on\nFROM\n    sys.databases\nGO\n\nSET RESULT_SET_CACHING ON\n\nALTER DATABASE [SQLPool01] SET RESULT_SET_CACHING ON\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M17E03T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 17"
+				},
+				"content": {
+					"query": "DROP DATABASE IF EXISTS demo;\nGO\n\nCREATE DATABASE demo;\nGO\n\nUSE demo;\nGO\n\nCREATE VIEW [2019Q1Sales] AS\nSELECT\n    SUBSTRING(result.filename(), 12, 4) as Year\n    ,SUBSTRING(result.filename(), 16, 2) as Month\n    ,SUBSTRING(result.filename(), 18, 2) as Day\n    ,SUM(TotalAmount) as TotalAmount\n    ,SUM(ProfitAmount) as ProfitAmount\n    ,COUNT(*) as TransactionsCount\nFROM\n    OPENROWSET(\n        BULK 'https://asadatalake356813.dfs.core.windows.net/wwi-02/sale-small/Year=2019/Quarter=Q1/Month=1/*/*.parquet',\n        FORMAT='PARQUET'\n    ) AS [result]\nGROUP BY\n    [result].filename()\nGO\n\nUSE demo;\n\nSELECT TOP (100) [Year]\n,[Month]\n,[Day]\n,[TotalAmount]\n,[ProfitAmount]\n,[TransactionsCount]\nFROM [dbo].[2019Q1Sales]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "Built-in",
+						"databaseName": "demo"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
 		}
 	]
 }
