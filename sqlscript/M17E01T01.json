@@ -1,0 +1,17 @@
+{
+	"name": "M17E01T01",
+	"properties": {
+		"content": {
+			"query": "SELECT count(*) FROM\n(\n    SELECT\n        FS.CustomerID\n        ,P.Seasonality\n        ,D.Year\n        ,D.Quarter\n        ,D.Month\n        ,avg(FS.TotalAmount) as AvgTotalAmount\n        ,avg(FS.ProfitAmount) as AvgProfitAmount\n        ,sum(FS.TotalAmount) as TotalAmount\n        ,sum(FS.ProfitAmount) as ProfitAmount\n    FROM\n        wwi.SaleSmall FS\n        JOIN wwi.Product P ON P.ProductId = FS.ProductId\n        JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\n    GROUP BY\n        FS.CustomerID\n        ,P.Seasonality\n        ,D.Year\n        ,D.Quarter\n        ,D.Month\n) T",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
