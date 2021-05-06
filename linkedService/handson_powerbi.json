@@ -1,0 +1,11 @@
+{
+	"name": "handson_powerbi",
+	"properties": {
+		"annotations": [],
+		"type": "PowerBIWorkspace",
+		"typeProperties": {
+			"workspaceID": "5bdd6b19-2f32-44c7-a4af-36b7f3197bca",
+			"tenantID": "47d4d35f-96b3-4604-91c5-c19c751d9da1"
+		}
+	}
+}
