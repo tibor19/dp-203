@@ -8,11 +8,44 @@
 		"asacosmosdb01_connectionString": {
 			"value": ""
 		},
+		"asadatalakedp210504_accountKey": {
+			"value": ""
+		},
+		"asastoredp210504_connectionString": {
+			"value": ""
+		},
 		"asaworkspace356813-WorkspaceDefaultSqlServer_connectionString": {
 			"value": ""
 		},
+		"asaworkspacedp210504-WorkspaceDefaultSqlServer_connectionString": {
+			"value": ""
+		},
+		"sqlpool01_connectionString": {
+			"value": ""
+		},
+		"sqlpool01_highperf_connectionString": {
+			"value": ""
+		},
+		"sqlpool01_import01_connectionString": {
+			"value": ""
+		},
+		"sqlpool01_workload01_connectionString": {
+			"value": ""
+		},
+		"sqlpool01_workload02_connectionString": {
+			"value": ""
+		},
+		"asadatalakedp210504_properties_typeProperties_url": {
+			"value": "https://asadatalakedp210504.dfs.core.windows.net"
+		},
+		"asakeyvaultdp210504_properties_typeProperties_baseUrl": {
+			"value": "https://asakeyvaultdp210504.vault.azure.net/"
+		},
 		"asaworkspace356813-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://asadatalake356813.dfs.core.windows.net"
+		},
+		"asaworkspacedp210504-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://asadatalakedp210504.dfs.core.windows.net"
 		}
 	}
 }

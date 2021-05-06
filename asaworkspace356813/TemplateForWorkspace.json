@@ -11,19 +11,687 @@
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'asacosmosdb01'"
 		},
+		"asadatalakedp210504_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'asadatalakedp210504'"
+		},
+		"asastoredp210504_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'asastoredp210504'"
+		},
 		"asaworkspace356813-WorkspaceDefaultSqlServer_connectionString": {
 			"type": "secureString",
 			"metadata": "Secure string for 'connectionString' of 'asaworkspace356813-WorkspaceDefaultSqlServer'"
 		},
+		"asaworkspacedp210504-WorkspaceDefaultSqlServer_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'asaworkspacedp210504-WorkspaceDefaultSqlServer'"
+		},
+		"sqlpool01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlpool01'"
+		},
+		"sqlpool01_highperf_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlpool01_highperf'"
+		},
+		"sqlpool01_import01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlpool01_import01'"
+		},
+		"sqlpool01_workload01_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlpool01_workload01'"
+		},
+		"sqlpool01_workload02_connectionString": {
+			"type": "secureString",
+			"metadata": "Secure string for 'connectionString' of 'sqlpool01_workload02'"
+		},
+		"asadatalakedp210504_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://asadatalakedp210504.dfs.core.windows.net"
+		},
+		"asakeyvaultdp210504_properties_typeProperties_baseUrl": {
+			"type": "string",
+			"defaultValue": "https://asakeyvaultdp210504.vault.azure.net/"
+		},
 		"asaworkspace356813-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://asadatalake356813.dfs.core.windows.net"
+		},
+		"asaworkspacedp210504-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://asadatalakedp210504.dfs.core.windows.net"
 		}
 	},
 	"variables": {
 		"workspaceId": "[concat('Microsoft.Synapse/workspaces/', parameters('workspaceName'))]"
 	},
 	"resources": [
+		{
+			"name": "[concat(parameters('workspaceName'), '/Copy Cosmos DB Container')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy data",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "CosmosDbSqlApiSource",
+								"preferredRegions": []
+							},
+							"sink": {
+								"type": "CosmosDbSqlApiSink",
+								"writeBehavior": "insert"
+							},
+							"enableStaging": false
+						},
+						"inputs": [
+							{
+								"referenceName": "asal400_customerprofile_cosmosdb",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "cosmos_db_htap",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"folder": {
+					"name": "Module 12"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_customerprofile_cosmosdb')]",
+				"[concat(variables('workspaceId'), '/datasets/cosmos_db_htap')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Copy December Sales')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Copy Sales",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "ParquetSource",
+								"storeSettings": {
+									"type": "AzureBlobFSReadSettings",
+									"recursive": true,
+									"enablePartitionDiscovery": false
+								}
+							},
+							"sink": {
+								"type": "SqlDWSink",
+								"preCopyScript": "TRUNCATE TABLE wwi_perf.Sale_Heap",
+								"allowPolyBase": true,
+								"polyBaseSettings": {
+									"rejectValue": 0,
+									"rejectType": "value",
+									"useTypeDefault": true
+								},
+								"disableMetricsCollection": false
+							},
+							"enableStaging": false,
+							"dataIntegrationUnits": 8,
+							"translator": {
+								"type": "TabularTranslator",
+								"mappings": [
+									{
+										"source": {
+											"name": "TransactionId",
+											"type": "String"
+										},
+										"sink": {
+											"name": "TransactionId",
+											"type": "Guid"
+										}
+									},
+									{
+										"source": {
+											"name": "CustomerId",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "CustomerId",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ProductId",
+											"type": "Int16"
+										},
+										"sink": {
+											"name": "ProductId",
+											"type": "Int16"
+										}
+									},
+									{
+										"source": {
+											"name": "Quantity",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Quantity",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "Price",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "Price",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "TotalAmount",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "TotalAmount",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "TransactionDate",
+											"type": "Int32"
+										},
+										"sink": {
+											"name": "TransactionDateId",
+											"type": "Int32"
+										}
+									},
+									{
+										"source": {
+											"name": "ProfitAmount",
+											"type": "Decimal"
+										},
+										"sink": {
+											"name": "ProfitAmount",
+											"type": "Decimal"
+										}
+									},
+									{
+										"source": {
+											"name": "Hour",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Hour",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "Minute",
+											"type": "SByte"
+										},
+										"sink": {
+											"name": "Minute",
+											"type": "Byte"
+										}
+									},
+									{
+										"source": {
+											"name": "StoreId",
+											"type": "Int16"
+										},
+										"sink": {
+											"name": "StoreId",
+											"type": "Int16"
+										}
+									}
+								]
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "asal400_december_sales",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "asal400_saleheap_asa",
+								"type": "DatasetReference",
+								"parameters": {}
+							}
+						]
+					}
+				],
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_december_sales')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_saleheap_asa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Lab 08 - Execute Business Analyst Queries')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "Analyst",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@range(1,5)",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Workload 2 for Data Analyst",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:02:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlDWSource",
+											"sqlReaderQuery": "select count(X.A) from (\nselect CAST(CustomerId as nvarchar(20)) as A from wwi.SaleSmall) X where A like '%3%'",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "wwi02_sale_small_workload_02_asa",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"annotations": [],
+				"lastPublishTime": "2021-05-04T13:02:33Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/wwi02_sale_small_workload_02_asa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Lab 08 - Execute Data Analyst and CEO Queries')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "CEO",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@range(1,6)",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Workload 1 for CEO",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:02:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlDWSource",
+											"sqlReaderQuery": "select count(X.A) from (\nselect CAST(CustomerId as nvarchar(20)) as A from wwi.SaleSmall) X where A like '%3%'",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "wwi02_sale_small_workload_01_asa",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "Analyst",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@range(1,6)",
+								"type": "Expression"
+							},
+							"activities": [
+								{
+									"name": "Workload 2 for Data Analyst",
+									"type": "Lookup",
+									"dependsOn": [],
+									"policy": {
+										"timeout": "0.00:02:00",
+										"retry": 0,
+										"retryIntervalInSeconds": 30,
+										"secureOutput": false,
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"source": {
+											"type": "SqlDWSource",
+											"sqlReaderQuery": "select count(X.A) from (\nselect CAST(CustomerId as nvarchar(20)) as A from wwi.SaleSmall) X where A like '%3%'",
+											"queryTimeout": "02:00:00",
+											"partitionOption": "None"
+										},
+										"dataset": {
+											"referenceName": "wwi02_sale_small_workload_02_asa",
+											"type": "DatasetReference",
+											"parameters": {}
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"annotations": [],
+				"lastPublishTime": "2021-05-04T13:02:43Z"
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/wwi02_sale_small_workload_01_asa')]",
+				"[concat(variables('workspaceId'), '/datasets/wwi02_sale_small_workload_02_asa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/User Profiles to Datalake')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "user_profiles_to_datalake",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "user_profiles_to_datalake",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EcommerceUserProfiles": {},
+									"UserProfiles": {},
+									"DataLake": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 16,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "Calculate Top 5 Products",
+						"type": "SynapseNotebook",
+						"dependsOn": [
+							{
+								"activity": "user_profiles_to_datalake",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"notebook": {
+								"referenceName": "Calculate Top 5 Products",
+								"type": "NotebookReference"
+							},
+							"parameters": {
+								"runId": {
+									"value": {
+										"value": "pipeline().RunId",
+										"type": "Expression"
+									},
+									"type": "string"
+								}
+							},
+							"snapshot": true
+						}
+					}
+				],
+				"folder": {
+					"name": "Module 09"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/dataflows/user_profiles_to_datalake')]",
+				"[concat(variables('workspaceId'), '/notebooks/Calculate Top 5 Products')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Write Campaign Analytics to ASA')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "asal400_lab2_writecampaignanalyticstoasa",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "asal400_lab2_writecampaignanalyticstoasa",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"CampaignAnalytics": {},
+									"CampaignAnalyticsASA": {}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"folder": {
+					"name": "Module 08"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/dataflows/asal400_lab2_writecampaignanalyticstoasa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Write User Profile Data to ASA')]",
+			"type": "Microsoft.Synapse/workspaces/pipelines",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"activities": [
+					{
+						"name": "write_user_profile_to_asa",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "7.00:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "write_user_profile_to_asa",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"EcommerceUserProfiles": {},
+									"UserProfiles": {},
+									"UserTopProductPurchasesASA": {},
+									"DataLake": {}
+								}
+							},
+							"staging": {
+								"linkedService": {
+									"referenceName": "asadatalakedp210504",
+									"type": "LinkedServiceReference"
+								},
+								"folderPath": "staging/userprofiles"
+							},
+							"compute": {
+								"coreCount": 16,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"folder": {
+					"name": "Module 08"
+				},
+				"annotations": []
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/dataflows/write_user_profile_to_asa')]",
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_campaign_analytics_source')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "asadatalakedp210504",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Module 08"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "campaignanalytics.csv",
+						"folderPath": "campaign-analytics",
+						"fileSystem": "wwi-02"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					},
+					{
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/asal400_customerprofile_cosmosdb')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
@@ -81,12 +749,89 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_december_sales')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "asadatalakedp210504",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "sale-20161230-snappy.parquet",
+						"folderPath": "campaign-analytics",
+						"fileSystem": "wwi-02"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "UTF8"
+					},
+					{
+						"name": "CustomerId",
+						"type": "INT32"
+					},
+					{
+						"name": "ProductId",
+						"type": "INT_16"
+					},
+					{
+						"name": "Quantity",
+						"type": "INT_8"
+					},
+					{
+						"name": "Price",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "TotalAmount",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "TransactionDate",
+						"type": "INT32"
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "DECIMAL",
+						"precision": 38,
+						"scale": 18
+					},
+					{
+						"name": "Hour",
+						"type": "INT_8"
+					},
+					{
+						"name": "Minute",
+						"type": "INT_8"
+					},
+					{
+						"name": "StoreId",
+						"type": "INT_16"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/asal400_ecommerce_userprofiles_source')]",
 			"type": "Microsoft.Synapse/workspaces/datasets",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
 				"linkedServiceName": {
-					"referenceName": "asaworkspace356813-WorkspaceDefaultStorage",
+					"referenceName": "asadatalakedp210504",
 					"type": "LinkedServiceReference"
 				},
 				"folder": {
@@ -125,7 +870,373 @@
 				}
 			},
 			"dependsOn": [
-				"[concat(variables('workspaceId'), '/linkedServices/asaworkspace356813-WorkspaceDefaultStorage')]"
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_saleheap_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01_import01",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "CustomerId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductId",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Quantity",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Price",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TotalAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TransactionDateId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "Hour",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Minute",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "StoreId",
+						"type": "smallint",
+						"precision": 5
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi_perf",
+					"table": "Sale_Heap"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01_import01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_wwi_campaign_analytics_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Module 08"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "Region",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Country",
+						"type": "nvarchar"
+					},
+					{
+						"name": "ProductCategory",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CampaignName",
+						"type": "nvarchar"
+					},
+					{
+						"name": "Revenue",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "RevenueTarget",
+						"type": "decimal",
+						"precision": 10,
+						"scale": 2
+					},
+					{
+						"name": "City",
+						"type": "nvarchar"
+					},
+					{
+						"name": "State",
+						"type": "nvarchar"
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi",
+					"table": "CampaignAnalytics"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_wwi_usertopproductpurchases_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01",
+					"type": "LinkedServiceReference"
+				},
+				"folder": {
+					"name": "Module 08"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "UserId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ItemsPurchasedLast12Months",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "IsTopProduct",
+						"type": "bit"
+					},
+					{
+						"name": "IsPreferredProduct",
+						"type": "bit"
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi",
+					"table": "UserTopProductPurchases"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/cosmos_db_htap')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "asacosmosdb01",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "CosmosDbSqlApiCollection",
+				"schema": {},
+				"typeProperties": {
+					"collectionName": "UserProfileHTAP"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asacosmosdb01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/wwi02_sale_small_workload_01_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01_workload01",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "CustomerId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductId",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Quantity",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Price",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TotalAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TransactionDateId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "Hour",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Minute",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "StoreId",
+						"type": "smallint",
+						"precision": 5
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi",
+					"table": "SaleSmall"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01_workload01')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/wwi02_sale_small_workload_02_asa')]",
+			"type": "Microsoft.Synapse/workspaces/datasets",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "sqlpool01_workload02",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlDWTable",
+				"schema": [
+					{
+						"name": "TransactionId",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "CustomerId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProductId",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Quantity",
+						"type": "smallint",
+						"precision": 5
+					},
+					{
+						"name": "Price",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TotalAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "TransactionDateId",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ProfitAmount",
+						"type": "decimal",
+						"precision": 9,
+						"scale": 2
+					},
+					{
+						"name": "Hour",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "Minute",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "StoreId",
+						"type": "smallint",
+						"precision": 5
+					}
+				],
+				"typeProperties": {
+					"schema": "wwi",
+					"table": "SaleSmall"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/sqlpool01_workload02')]"
 			]
 		},
 		{
@@ -146,6 +1257,49 @@
 			"dependsOn": [
 				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
 			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asadatalakedp210504')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('asadatalakedp210504_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('asadatalakedp210504_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asakeyvaultdp210504')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureKeyVault",
+				"typeProperties": {
+					"baseUrl": "[parameters('asakeyvaultdp210504_properties_typeProperties_baseUrl')]"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asastoredp210504')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobStorage",
+				"typeProperties": {
+					"connectionString": "[parameters('asastoredp210504_connectionString')]"
+				}
+			},
+			"dependsOn": []
 		},
 		{
 			"name": "[concat(parameters('workspaceName'), '/asaworkspace356813-WorkspaceDefaultSqlServer')]",
@@ -191,6 +1345,164 @@
 			]
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/asaworkspacedp210504-WorkspaceDefaultSqlServer')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"parameters": {
+					"DBName": {
+						"type": "String"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('asaworkspacedp210504-WorkspaceDefaultSqlServer_connectionString')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asaworkspacedp210504-WorkspaceDefaultStorage')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('asaworkspacedp210504-WorkspaceDefaultStorage_properties_typeProperties_url')]"
+				},
+				"connectVia": {
+					"referenceName": "AutoResolveIntegrationRuntime",
+					"type": "IntegrationRuntimeReference"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/integrationRuntimes/AutoResolveIntegrationRuntime')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlpool01')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlpool01_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "asakeyvaultdp210504",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQL-USER-ASA"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asakeyvaultdp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlpool01_highperf')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlpool01_highperf_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "asakeyvaultdp210504",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQL-USER-ASA"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asakeyvaultdp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlpool01_import01')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlpool01_import01_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "asakeyvaultdp210504",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQL-USER-ASA"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asakeyvaultdp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlpool01_workload01')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlpool01_workload01_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "asakeyvaultdp210504",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQL-USER-ASA"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asakeyvaultdp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sqlpool01_workload02')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDW",
+				"typeProperties": {
+					"connectionString": "[parameters('sqlpool01_workload02_connectionString')]",
+					"password": {
+						"type": "AzureKeyVaultSecret",
+						"store": {
+							"referenceName": "asakeyvaultdp210504",
+							"type": "LinkedServiceReference"
+						},
+						"secretName": "SQL-USER-ASA"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/linkedServices/asakeyvaultdp210504')]"
+			]
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/AutoResolveIntegrationRuntime')]",
 			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
 			"apiVersion": "2019-06-01-preview",
@@ -210,7 +1522,465 @@
 			"dependsOn": []
 		},
 		{
-			"name": "[concat(parameters('workspaceName'), '/Ex01Task01')]",
+			"name": "[concat(parameters('workspaceName'), '/AzureIntegrationRuntime01')]",
+			"type": "Microsoft.Synapse/workspaces/integrationRuntimes",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "Managed",
+				"typeProperties": {
+					"computeProperties": {
+						"location": "AutoResolve",
+						"dataFlowProperties": {
+							"computeType": "MemoryOptimized",
+							"coreCount": 16,
+							"timeToLive": 60
+						}
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/asal400_lab2_writecampaignanalyticstoasa')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 08"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "asal400_campaign_analytics_source",
+								"type": "DatasetReference"
+							},
+							"name": "CampaignAnalytics"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "asal400_wwi_campaign_analytics_asa",
+								"type": "DatasetReference"
+							},
+							"name": "CampaignAnalyticsASA"
+						}
+					],
+					"transformations": [
+						{
+							"name": "MapCampaignAnalytics"
+						},
+						{
+							"name": "ConvertColumnTypesAndValues"
+						},
+						{
+							"name": "SelectCampaignAnalyticsColumns"
+						}
+					],
+					"script": "source(output(\n\t\t{_col0_} as string,\n\t\t{_col1_} as string,\n\t\t{_col2_} as string,\n\t\t{_col3_} as string,\n\t\t{_col4_} as string,\n\t\t{_col5_} as double,\n\t\t{_col6_} as string,\n\t\t{_col7_} as double,\n\t\t{_col8_} as string,\n\t\t{_col9_} as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tskipLines: 1) ~> CampaignAnalytics\nCampaignAnalytics select(mapColumn(\n\t\tRegion = {_col0_},\n\t\tCountry = {_col1_},\n\t\tProductCategory = {_col2_},\n\t\tCampaignName = {_col3_},\n\t\tRevenuePart1 = {_col4_},\n\t\tRevenue = {_col5_},\n\t\tRevenueTargetPart1 = {_col6_},\n\t\tRevenueTarget = {_col7_},\n\t\tCity = {_col8_},\n\t\tState = {_col9_}\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> MapCampaignAnalytics\nMapCampaignAnalytics derive(Revenue = toDecimal(replace(concat(toString(RevenuePart1), toString(Revenue)), '\\\\', ''), 10, 2, '$###,###.##'),\n\t\tRevenueTarget = toDecimal(replace(concat(toString(RevenueTargetPart1), toString(RevenueTarget)), '\\\\', ''), 10, 2, '$###,###.##')) ~> ConvertColumnTypesAndValues\nConvertColumnTypesAndValues select(mapColumn(\n\t\tRegion,\n\t\tCountry,\n\t\tProductCategory,\n\t\tCampaignName,\n\t\tRevenue,\n\t\tRevenueTarget,\n\t\tCity,\n\t\tState\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> SelectCampaignAnalyticsColumns\nSelectCampaignAnalyticsColumns sink(input(\n\t\tRegion as string,\n\t\tCountry as string,\n\t\tProductCategory as string,\n\t\tCampaignName as string,\n\t\tRevenue as decimal(10,2),\n\t\tRevenueTarget as decimal(10,2),\n\t\tCity as string,\n\t\tState as string\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tformat: 'table',\n\tstaged: false,\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> CampaignAnalyticsASA"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_campaign_analytics_source')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_wwi_campaign_analytics_asa')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/user_profiles_to_datalake')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 09"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "asal400_ecommerce_userprofiles_source",
+								"type": "DatasetReference"
+							},
+							"name": "EcommerceUserProfiles"
+						},
+						{
+							"dataset": {
+								"referenceName": "asal400_customerprofile_cosmosdb",
+								"type": "DatasetReference"
+							},
+							"name": "UserProfiles"
+						}
+					],
+					"sinks": [
+						{
+							"linkedService": {
+								"referenceName": "asadatalakedp210504",
+								"type": "LinkedServiceReference"
+							},
+							"name": "DataLake"
+						}
+					],
+					"transformations": [
+						{
+							"name": "userId"
+						},
+						{
+							"name": "UserTopProducts"
+						},
+						{
+							"name": "DerivedProductColumns"
+						},
+						{
+							"name": "UserPreferredProducts"
+						},
+						{
+							"name": "JoinTopProductsWithPreferredProducts"
+						},
+						{
+							"name": "DerivedColumnsForMerge"
+						},
+						{
+							"name": "Filter1"
+						}
+					],
+					"script": "source(output(\n\t\tvisitorId as string,\n\t\ttopProductPurchases as (productId as string, itemsPurchasedLast12Months as string)[]\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'arrayOfDocuments',\n\twildcardPaths:['online-user-profiles-02/*.json']) ~> EcommerceUserProfiles\nsource(output(\n\t\tcartId as string,\n\t\tpreferredProducts as integer[],\n\t\tproductReviews as (productId as integer, reviewDate as string, reviewText as string)[],\n\t\tuserId as integer\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'document') ~> UserProfiles\nEcommerceUserProfiles derive(visitorId = toInteger(visitorId)) ~> userId\nuserId foldDown(unroll(topProductPurchases),\n\tmapColumn(\n\t\tvisitorId,\n\t\tproductId = topProductPurchases.productId,\n\t\titemsPurchasedLast12Months = topProductPurchases.itemsPurchasedLast12Months\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> UserTopProducts\nUserTopProducts derive(productId = toInteger(productId),\n\t\titemsPurchasedLast12Months = toInteger(itemsPurchasedLast12Months)) ~> DerivedProductColumns\nUserProfiles foldDown(unroll(preferredProducts),\n\tmapColumn(\n\t\tpreferredProductId = preferredProducts,\n\t\tuserId\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> UserPreferredProducts\nDerivedProductColumns, UserPreferredProducts join(visitorId == userId,\n\tjoinType:'outer',\n\tpartitionBy('hash', 30,\n\t\tproductId\n\t),\n\tbroadcast: 'left')~> JoinTopProductsWithPreferredProducts\nJoinTopProductsWithPreferredProducts derive(isTopProduct = toBoolean(iif(isNull(productId), 'false', 'true')),\n\t\tisPreferredProduct = toBoolean(iif(isNull(preferredProductId), 'false', 'true')),\n\t\tproductId = iif(isNull(productId), preferredProductId, productId),\n\t\tuserId = iif(isNull(userId), visitorId, userId)) ~> DerivedColumnsForMerge\nDerivedColumnsForMerge filter(!isNull(productId)) ~> Filter1\nFilter1 sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tcompressionType: 'snappy',\n\tcompressionLevel: 'Fastest',\n\tfileSystem: 'wwi-02',\n\tfolderPath: 'top-products',\n\ttruncate:true,\n\tmergeSchema: false,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tmapColumn(\n\t\tvisitorId,\n\t\tproductId,\n\t\titemsPurchasedLast12Months,\n\t\tpreferredProductId,\n\t\tuserId,\n\t\tisTopProduct,\n\t\tisPreferredProduct\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DataLake"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_ecommerce_userprofiles_source')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_customerprofile_cosmosdb')]",
+				"[concat(variables('workspaceId'), '/linkedServices/asadatalakedp210504')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/write_user_profile_to_asa')]",
+			"type": "Microsoft.Synapse/workspaces/dataflows",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 08"
+				},
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "asal400_ecommerce_userprofiles_source",
+								"type": "DatasetReference"
+							},
+							"name": "EcommerceUserProfiles"
+						},
+						{
+							"dataset": {
+								"referenceName": "asal400_customerprofile_cosmosdb",
+								"type": "DatasetReference"
+							},
+							"name": "UserProfiles"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "asal400_wwi_usertopproductpurchases_asa",
+								"type": "DatasetReference"
+							},
+							"name": "UserTopProductPurchasesASA"
+						},
+						{
+							"linkedService": {
+								"referenceName": "asaworkspacedp210504-WorkspaceDefaultStorage",
+								"type": "LinkedServiceReference"
+							},
+							"name": "DataLake"
+						}
+					],
+					"transformations": [
+						{
+							"name": "userId"
+						},
+						{
+							"name": "UserTopProducts"
+						},
+						{
+							"name": "DeriveProductColumns"
+						},
+						{
+							"name": "UserPreferredProducts"
+						},
+						{
+							"name": "JoinTopProductsWithPreferredProducts"
+						},
+						{
+							"name": "DerivedColumnsForMerge"
+						},
+						{
+							"name": "FilterNullProducts"
+						}
+					],
+					"script": "source(output(\n\t\tvisitorId as string,\n\t\ttopProductPurchases as (productId as string, itemsPurchasedLast12Months as string)[]\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tignoreNoFilesFound: false,\n\tdocumentForm: 'arrayOfDocuments',\n\twildcardPaths:['online-user-profiles-02/*.json']) ~> EcommerceUserProfiles\nsource(output(\n\t\tuserId as integer,\n\t\tcartId as string,\n\t\tpreferredProducts as integer[],\n\t\tproductReviews as (productId as string, reviewText as string, reviewDate as string)[]\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'document') ~> UserProfiles\nEcommerceUserProfiles derive(visitorId = toInteger(visitorId)) ~> userId\nuserId foldDown(unroll(topProductPurchases),\n\tmapColumn(\n\t\tvisitorId,\n\t\tproductId = topProductPurchases.productId,\n\t\titemsPurchasedLast12Months = topProductPurchases.itemsPurchasedLast12Months\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> UserTopProducts\nUserTopProducts derive(productId = toInteger(productId),\n\t\titemsPurchasedLast12Months = toInteger(itemsPurchasedLast12Months)) ~> DeriveProductColumns\nUserProfiles foldDown(unroll(preferredProducts),\n\tmapColumn(\n\t\tuserId,\n\t\tpreferredProductId = preferredProducts\n\t),\n\tskipDuplicateMapInputs: false,\n\tskipDuplicateMapOutputs: false) ~> UserPreferredProducts\nDeriveProductColumns, UserPreferredProducts join(visitorId == userId,\n\tjoinType:'outer',\n\tpartitionBy('hash', 30,\n\t\tproductId\n\t),\n\tbroadcast: 'left')~> JoinTopProductsWithPreferredProducts\nJoinTopProductsWithPreferredProducts derive(isTopProduct = toBoolean(iif(isNull(productId), 'false', 'true')),\n\t\tisPreferredProduct = toBoolean(iif(isNull(preferredProductId), 'false', 'true')),\n\t\tproductId = iif(isNull(productId), preferredProductId, productId),\n\t\tuserId = iif(isNull(userId), visitorId, userId)) ~> DerivedColumnsForMerge\nDerivedColumnsForMerge filter(!isNull(productId)) ~> FilterNullProducts\nFilterNullProducts sink(input(\n\t\tUserId as integer,\n\t\tProductId as integer,\n\t\tItemsPurchasedLast12Months as integer,\n\t\tIsTopProduct as boolean,\n\t\tIsPreferredProduct as boolean\n\t),\n\tallowSchemaDrift: true,\n\tvalidateSchema: false,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\ttruncate:true,\n\tformat: 'table',\n\tstaged: true,\n\tallowCopyCommand: true,\n\tmapColumn(\n\t\tUserId = userId,\n\t\tProductId = productId,\n\t\tItemsPurchasedLast12Months = itemsPurchasedLast12Months,\n\t\tIsTopProduct = isTopProduct,\n\t\tIsPreferredProduct = isPreferredProduct\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> UserTopProductPurchasesASA\nFilterNullProducts sink(allowSchemaDrift: true,\n\tvalidateSchema: false,\n\tformat: 'delta',\n\tcompressionType: 'snappy',\n\tcompressionLevel: 'Fastest',\n\tfileSystem: 'wwi-02',\n\tfolderPath: 'top-products',\n\ttruncate:true,\n\tmergeSchema: false,\n\tautoCompact: false,\n\toptimizedWrite: false,\n\tvacuum: 0,\n\tdeletable:false,\n\tinsertable:true,\n\tupdateable:false,\n\tupsertable:false,\n\tmapColumn(\n\t\tvisitorId,\n\t\tproductId,\n\t\titemsPurchasedLast12Months,\n\t\tpreferredProductId,\n\t\tuserId,\n\t\tisTopProduct,\n\t\tisPreferredProduct\n\t),\n\tskipDuplicateMapInputs: true,\n\tskipDuplicateMapOutputs: true) ~> DataLake"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('workspaceId'), '/datasets/asal400_ecommerce_userprofiles_source')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_customerprofile_cosmosdb')]",
+				"[concat(variables('workspaceId'), '/datasets/asal400_wwi_usertopproductpurchases_asa')]",
+				"[concat(variables('workspaceId'), '/linkedServices/asaworkspacedp210504-WorkspaceDefaultStorage')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/WorkspaceSystemIdentity')]",
+			"type": "Microsoft.Synapse/workspaces/credentials",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"type": "ManagedIdentity",
+				"typeProperties": {}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Activity 03 - Data Warehouse Optimization')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": null,
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"name": "SQLPool01",
+						"type": "SqlPool"
+					}
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/EM07E01T04')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "COPY INTO wwi_staging.Sale\nFROM 'https://asadatalakedp210504.dfs.core.windows.net/wwi-02/sale-small/Year=2019'\nWITH (\n    FILE_TYPE = 'PARQUET',\n    COMPRESSION = 'SNAPPY'\n)\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Lab 05 - Exercise 3 - Column Level Security')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "    /*  Column-level security feature in Azure Synapse simplifies the design and coding of security in application.\n        It ensures column level security by restricting column access to protect sensitive data. */\n\n    /* Scenario: In this scenario we will be working with two users. The first one is the CEO, he has access to all\n        data. The second one is DataAnalystMiami, this user doesn't have access to the confidential Revenue column\n        in the Sales table. Follow this lab, one step at a time to see how Column-level security removes access to the\n        Revenue column to DataAnalystMiami */\n\n    --Step 1: Let us see how this feature in Azure Synapse works. Before that let us have a look at the Campaign table.\n    select  Top 100 * from wwi_Security.Sale\n    where City is not null and state is not null\n\n    /*  Consider a scenario where there are two users.\n        A CEO, who is an authorized  personnel with access to all the information in the database\n        and a Data Analyst, to whom only required information should be presented.*/\n\n    -- Step:2 Verify the existence of the 'CEO' and 'DataAnalystMiami' users in the Datawarehouse.\n    SELECT Name as [User1] FROM sys.sysusers WHERE name = N'CEO';\n    SELECT Name as [User2] FROM sys.sysusers WHERE name = N'DataAnalystMiami';\n\n\n    -- Step:3 Now let us enforce column level security for the DataAnalystMiami.\n    /*  The Sales table in the warehouse has information like ProductID, Analyst, Product, CampaignName, Quantity, Region, State, City, RevenueTarget and Revenue.\n        The Revenue generated from every campaign is classified and should be hidden from DataAnalystMiami.\n    */\n\n    REVOKE SELECT ON wwi_security.Sale FROM DataAnalystMiami;\n    GRANT SELECT ON wwi_security.Sale([ProductID], [Analyst], [Product], [CampaignName],[Quantity], [Region], [State], [City], [RevenueTarget]) TO DataAnalystMiami;\n    -- This provides DataAnalystMiami access to all the columns of the Sale table but Revenue.\n\n    -- Step:4 Then, to check if the security has been enforced, we execute the following query with current User As 'DataAnalystMiami', this will result in an error\n    --  since DataAnalystMiami doesn't have select access to the Revenue column\n    EXECUTE AS USER ='DataAnalystMiami';\n    select TOP 100 * from wwi_security.Sale;\n    ---\n    -- The following query will succeed since we are not including the Revenue column in the query.\n    EXECUTE AS USER ='DataAnalystMiami';\n    select [ProductID], [Analyst], [Product], [CampaignName],[Quantity], [Region], [State], [City], [RevenueTarget] from wwi_security.Sale;\n    \n    -- Step:5 Whereas, the CEO of the company should be authorized with all the information present in the warehouse.To do so, we execute the following query.\n    Revert;\n    GRANT SELECT ON wwi_security.Sale TO CEO;  --Full access to all columns.\n\n    -- Step:6 Let us check if our CEO user can see all the information that is present. Assign Current User As 'CEO' and the execute the query\n    EXECUTE AS USER ='CEO'\n    select * from wwi_security.Sale\n    Revert;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Lab 05 - Exercise 3 - Dynamic Data Masking')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "    -------------------------------------------------------------------------Dynamic Data Masking (DDM)----------------------------------------------------------------------------------------------------------\n    /*  Dynamic data masking helps prevent unauthorized access to sensitive data by enabling customers\n        to designate how much of the sensitive data to reveal with minimal impact on the application layer.\n        Let see how */\n\n    /* Scenario: WWI has identified sensitive information in the CustomerInfo table. They would like us to \n        obfuscate the CreditCard and Email columns of the CustomerInfo table to DataAnalysts */\n\n    -- Step:1 Let us first get a view of CustomerInfo table.\n    SELECT TOP (100) * FROM wwi_security.CustomerInfo;\n\n    -- Step:2 Let's confirm that there are no Dynamic Data Masking (DDM) applied on columns.\n    SELECT c.name, tbl.name as table_name, c.is_masked, c.masking_function  \n    FROM sys.masked_columns AS c  \n    JOIN sys.tables AS tbl\n        ON c.[object_id] = tbl.[object_id]  \n    WHERE is_masked = 1\n        AND tbl.name = 'CustomerInfo';\n    -- No results returned verify that no data masking has been done yet.\n\n    -- Step:3 Now lets mask 'CreditCard' and 'Email' Column of 'CustomerInfo' table.\n    ALTER TABLE wwi_security.CustomerInfo  \n    ALTER COLUMN [CreditCard] ADD MASKED WITH (FUNCTION = 'partial(0,\"XXXX-XXXX-XXXX-\",4)');\n    GO\n    ALTER TABLE wwi_security.CustomerInfo\n    ALTER COLUMN Email ADD MASKED WITH (FUNCTION = 'email()');\n    GO\n    -- The columns are sucessfully masked.\n\n    -- Step:4 Let's see Dynamic Data Masking (DDM) applied on the two columns.\n    SELECT c.name, tbl.name as table_name, c.is_masked, c.masking_function  \n    FROM sys.masked_columns AS c  \n    JOIN sys.tables AS tbl\n        ON c.[object_id] = tbl.[object_id]  \n    WHERE is_masked = 1\n        AND tbl.name ='CustomerInfo';\n\n    -- Step:5 Now, let us grant SELECT permission to 'DataAnalystMiami' on the 'CustomerInfo' table.\n   GRANT SELECT ON wwi_security.CustomerInfo TO DataAnalystMiami;  \n\n    -- Step:6 Logged in as  'DataAnalystMiami' let us execute the select query and view the result.\n    EXECUTE AS USER = 'DataAnalystMiami';  \n    SELECT * FROM wwi_security.CustomerInfo;\n\n    -- Step:7 Let us remove the data masking using UNMASK permission\n    GRANT UNMASK TO DataAnalystMiami;\n    EXECUTE AS USER = 'DataAnalystMiami';  \n    SELECT *\n    FROM wwi_security.CustomerInfo;\n    revert;\n    REVOKE UNMASK TO DataAnalystMiami;  \n\n    ----step:8 Reverting all the changes back to as it was.\n    ALTER TABLE wwi_security.CustomerInfo\n    ALTER COLUMN CreditCard DROP MASKED;\n    GO\n    ALTER TABLE wwi_security.CustomerInfo\n    ALTER COLUMN Email DROP MASKED;\n    GO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Lab 05 - Exercise 3 - Row Level Security')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"content": {
+					"query": "/*\tRow level Security (RLS) in Azure Synapse enables us to use group membership to control access to rows in a table.\n\tAzure Synapse applies the access restriction every time the data access is attempted from any user. \n\tLet see how we can implement row level security in Azure Synapse.*/\n\n----------------------------------Row-Level Security (RLS), 1: Filter predicates------------------------------------------------------------------\n-- Step:1 The Sale table has two Analyst values: DataAnalystMiami and DataAnalystSanDiego. \n--     Each analyst has jurisdiction across a specific Region. DataAnalystMiami on the South East Region\n--      and DataAnalystSanDiego on the Far West region.\nSELECT DISTINCT Analyst, Region FROM wwi_security.Sale order by Analyst ;\n\n/* Scenario: WWI requires that an Analyst only see the data for their own data from their own region. The CEO should see ALL data.\n    In the Sale table, there is an Analyst column that we can use to filter data to a specific Analyst value. */\n\n/* We will define this filter using what is called a Security Predicate. This is an inline table-valued function that allows\n    us to evaluate additional logic, in this case determining if the Analyst executing the query is the same as the Analyst\n    specified in the Analyst column in the row. The function returns 1 (will return the row) when a row in the Analyst column is the same as the \n    user executing the query (@Analyst = USER_NAME()) or if the user executing the query is the CEO user (USER_NAME() = 'CEO')\n    whom has access to all data.\n*/\n\n-- Review any existing security predicates in the database\nSELECT * FROM sys.security_predicates\n\n--Step:2 Create a new Schema to hold the security predicate, then define the predicate function. It returns 1 (or True) when\n--  a row should be returned in the parent query.\nGO\n\nCREATE FUNCTION wwi_security.fn_securitypredicate(@Analyst AS sysname)  \n    RETURNS TABLE  \nWITH SCHEMABINDING  \nAS  \n    RETURN SELECT 1 AS fn_securitypredicate_result\n    WHERE @Analyst = USER_NAME() OR USER_NAME() = 'CEO'\nGO\n-- Now we define security policy that adds the filter predicate to the Sale table. This will filter rows based on their login name.\nCREATE SECURITY POLICY SalesFilter  \nADD FILTER PREDICATE wwi_security.fn_securitypredicate(Analyst)\nON wwi_security.Sale\nWITH (STATE = ON);\n\n------ Allow SELECT permissions to the Sale Table.------\nGRANT SELECT ON wwi_security.Sale TO CEO, DataAnalystMiami, DataAnalystSanDiego;\n\n-- Step:3 Let us now test the filtering predicate, by selecting data from the Sale table as 'DataAnalystMiami' user.\nEXECUTE AS USER = 'DataAnalystMiami' \nSELECT * FROM wwi_security.Sale;\nrevert;\n-- As we can see, the query has returned rows here Login name is DataAnalystMiami\n\n-- Step:4 Let us test the same for  'DataAnalystSanDiego' user.\nEXECUTE AS USER = 'DataAnalystSanDiego';\nSELECT * FROM wwi_security.Sale;\nrevert;\n-- RLS is working indeed.\n\n-- Step:5 The CEO should be able to see all rows in the table.\nEXECUTE AS USER = 'CEO';  \nSELECT * FROM wwi_security.Sale;\nrevert;\n-- And he can.\n\n--Step:6 To disable the security policy we just created above, we execute the following.\nALTER SECURITY POLICY SalesFilter  \nWITH (STATE = OFF);\n\nDROP SECURITY POLICY SalesFilter;\nDROP FUNCTION wwi_security.fn_securitypredicate;",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E01T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "CREATE SCHEMA [wwi_staging]\nGO\n\nCREATE TABLE [wwi_staging].[SaleHeap]\n( \n    [TransactionId] [uniqueidentifier]  NOT NULL,\n    [CustomerId] [int]  NOT NULL,\n    [ProductId] [smallint]  NOT NULL,\n    [Quantity] [smallint]  NOT NULL,\n    [Price] [decimal](9,2)  NOT NULL,\n    [TotalAmount] [decimal](9,2)  NOT NULL,\n    [TransactionDate] [int]  NOT NULL,\n    [ProfitAmount] [decimal](9,2)  NOT NULL,\n    [Hour] [tinyint]  NOT NULL,\n    [Minute] [tinyint]  NOT NULL,\n    [StoreId] [smallint]  NOT NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    HEAP\n)\nGO\n\nCREATE TABLE [wwi_staging].[Sale]\n(\n    [TransactionId] [uniqueidentifier]  NOT NULL,\n    [CustomerId] [int]  NOT NULL,\n    [ProductId] [smallint]  NOT NULL,\n    [Quantity] [smallint]  NOT NULL,\n    [Price] [decimal](9,2)  NOT NULL,\n    [TotalAmount] [decimal](9,2)  NOT NULL,\n    [TransactionDate] [int]  NOT NULL,\n    [ProfitAmount] [decimal](9,2)  NOT NULL,\n    [Hour] [tinyint]  NOT NULL,\n    [Minute] [tinyint]  NOT NULL,\n    [StoreId] [smallint]  NOT NULL\n)\nWITH\n(\n    DISTRIBUTION = HASH ( [CustomerId] ),\n    CLUSTERED COLUMNSTORE INDEX,\n    PARTITION\n    (\n        [TransactionDate] RANGE RIGHT FOR VALUES (20100101, 20100201, 20100301, 20100401, 20100501, 20100601, 20100701, 20100801, 20100901, 20101001, 20101101, 20101201, 20110101, 20110201, 20110301, 20110401, 20110501, 20110601, 20110701, 20110801, 20110901, 20111001, 20111101, 20111201, 20120101, 20120201, 20120301, 20120401, 20120501, 20120601, 20120701, 20120801, 20120901, 20121001, 20121101, 20121201, 20130101, 20130201, 20130301, 20130401, 20130501, 20130601, 20130701, 20130801, 20130901, 20131001, 20131101, 20131201, 20140101, 20140201, 20140301, 20140401, 20140501, 20140601, 20140701, 20140801, 20140901, 20141001, 20141101, 20141201, 20150101, 20150201, 20150301, 20150401, 20150501, 20150601, 20150701, 20150801, 20150901, 20151001, 20151101, 20151201, 20160101, 20160201, 20160301, 20160401, 20160501, 20160601, 20160701, 20160801, 20160901, 20161001, 20161101, 20161201, 20170101, 20170201, 20170301, 20170401, 20170501, 20170601, 20170701, 20170801, 20170901, 20171001, 20171101, 20171201, 20180101, 20180201, 20180301, 20180401, 20180501, 20180601, 20180701, 20180801, 20180901, 20181001, 20181101, 20181201, 20190101, 20190201, 20190301, 20190401, 20190501, 20190601, 20190701, 20190801, 20190901, 20191001, 20191101, 20191201)\n    )\n)\nGO\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E01T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "-- Replace SUFFIX with the lab workspace id.\nCREATE EXTERNAL DATA SOURCE ABSS\nWITH\n( TYPE = HADOOP,\n    LOCATION = 'abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net'\n);\nGO\n\nCREATE EXTERNAL FILE FORMAT [ParquetFormat]\nWITH (\n    FORMAT_TYPE = PARQUET,\n    DATA_COMPRESSION = 'org.apache.hadoop.io.compress.SnappyCodec'\n)\nGO\n\nCREATE SCHEMA [wwi_external];\nGO\n\nCREATE EXTERNAL TABLE [wwi_external].Sales\n    (\n        [TransactionId] [nvarchar](36)  NOT NULL,\n        [CustomerId] [int]  NOT NULL,\n        [ProductId] [smallint]  NOT NULL,\n        [Quantity] [smallint]  NOT NULL,\n        [Price] [decimal](9,2)  NOT NULL,\n        [TotalAmount] [decimal](9,2)  NOT NULL,\n        [TransactionDate] [int]  NOT NULL,\n        [ProfitAmount] [decimal](9,2)  NOT NULL,\n        [Hour] [tinyint]  NOT NULL,\n        [Minute] [tinyint]  NOT NULL,\n        [StoreId] [smallint]  NOT NULL\n    )\nWITH\n    (\n        LOCATION = '/sale-small/Year=2019',  \n        DATA_SOURCE = ABSS,\n        FILE_FORMAT = [ParquetFormat]  \n    )  \nGO\n\nINSERT INTO [wwi_staging].[SaleHeap]\nSELECT *\nFROM [wwi_external].[Sales]\n\nSELECT count(1) FROM [wwi_staging].[SaleHeap]",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E01T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "TRUNCATE TABLE wwi_staging.SaleHeap;\nGO\n\n-- Replace <PrimaryStorage> with the workspace default storage account name.\nCOPY INTO wwi_staging.SaleHeap\nFROM 'https://asadatalakedp210504.dfs.core.windows.net/wwi-02/sale-small/Year=2019'\nWITH (\n    FILE_TYPE = 'PARQUET',\n    COMPRESSION = 'SNAPPY'\n)\nGO\n\nSELECT COUNT(1) FROM wwi_staging.SaleHeap(nolock)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E01T05')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "CREATE TABLE [wwi_staging].DailySalesCounts\n    (\n        [Date] [int]  NOT NULL,\n        [NorthAmerica] [int]  NOT NULL,\n        [SouthAmerica] [int]  NOT NULL,\n        [Europe] [int]  NOT NULL,\n        [Africa] [int]  NOT NULL,\n        [Asia] [int]  NOT NULL\n    )\nGO\n\n-- Replace <PrimaryStorage> with the workspace default storage account name.\nCOPY INTO wwi_staging.DailySalesCounts\nFROM 'https://asadatalakedp210504.dfs.core.windows.net/wwi-02/campaign-analytics/dailycounts.txt'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIELDTERMINATOR='.',\n    ROWTERMINATOR=','\n)\nGO\n\nSELECT * FROM [wwi_staging].DailySalesCounts\nORDER BY [Date] DESC\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E01T06')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "CREATE EXTERNAL FILE FORMAT csv_dailysales\nWITH (\n    FORMAT_TYPE = DELIMITEDTEXT,\n    FORMAT_OPTIONS (\n        FIELD_TERMINATOR = '.',\n        DATE_FORMAT = '',\n        USE_TYPE_DEFAULT = False\n    )\n);\nGO\n\nCREATE EXTERNAL TABLE [wwi_external].DailySalesCounts\n    (\n        [Date] [int]  NOT NULL,\n        [NorthAmerica] [int]  NOT NULL,\n        [SouthAmerica] [int]  NOT NULL,\n        [Europe] [int]  NOT NULL,\n        [Africa] [int]  NOT NULL,\n        [Asia] [int]  NOT NULL\n    )\nWITH\n    (\n        LOCATION = '/campaign-analytics/dailycounts.txt',  \n        DATA_SOURCE = ABSS,\n        FILE_FORMAT = csv_dailysales\n    )  \nGO\nINSERT INTO [wwi_staging].[DailySalesCounts]\nSELECT *\nFROM [wwi_external].[DailySalesCounts]\n\n\nSELECT * FROM [wwi_staging].[DailySalesCounts]\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M07E02T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 07"
+				},
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE group_name = 'BigDataLoad')\nBEGIN\n    CREATE WORKLOAD GROUP BigDataLoad WITH  \n    (\n        MIN_PERCENTAGE_RESOURCE = 50 -- integer value\n        ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 25 --  (guaranteed a minimum of 4 concurrency)\n        ,CAP_PERCENTAGE_RESOURCE = 100\n    );\nEND\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE [name] = 'HeavyLoader')\nBEGIN\n    CREATE WORKLOAD Classifier HeavyLoader WITH\n    (\n        Workload_Group ='BigDataLoad',\n        MemberName='asa.sql.import01',\n        IMPORTANCE = HIGH\n    );\nEND\n\nSELECT * FROM sys.workload_management_workload_classifiers\n\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M08E01T01')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -233,6 +2003,690 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "IF OBJECT_ID(N'[dbo].[Category]', N'U') IS NOT NULL\nDROP TABLE [dbo].[Category]\n\nCREATE TABLE [dbo].[Category]\n( \n    [ID] [float]  NOT NULL,\n    [Category] [varchar](255)  NULL,\n    [SubCategory] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[Books]', N'U') IS NOT NULL\nDROP TABLE [dbo].[Books]\n\nCREATE TABLE [dbo].[Books]\n( \n    [ID] [float]  NOT NULL,\n    [BookListID] [float]  NULL,\n    [Title] [varchar](255)  NULL,\n    [Author] [varchar](255)  NULL,\n    [Duration] [float]  NULL,\n    [Image] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[BookConsumption]', N'U') IS NOT NULL\nDROP TABLE [dbo].[BookConsumption]\n\nCREATE TABLE [dbo].[BookConsumption]\n( \n    [BookID] [float]  NULL,\n    [Clicks] [float]  NULL,\n    [Downloads] [float]  NULL,\n    [Time Spent] [float]  NULL,\n    [Country] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nIF OBJECT_ID(N'[dbo].[BookList]', N'U') IS NOT NULL\nDROP TABLE [dbo].[BookList]\n\nCREATE TABLE [dbo].[BookList]\n( \n    [ID] [float]  NOT NULL,\n    [CategoryID] [float]  NULL,\n    [BookList] [varchar](255)  NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    CLUSTERED COLUMNSTORE INDEX\n)\nGO\n\nCOPY INTO Category \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/Category.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO Books \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/Books.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO BookConsumption \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/BookConsumption.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO\n\nCOPY INTO BookList \nFROM 'https://solliancepublicdata.blob.core.windows.net/cdp/csv/BookList.csv'\nWITH (\n    FILE_TYPE = 'CSV',\n    FIRSTROW = 2\n)\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "SELECT\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\nSELECT\n  ROW_NUMBER() OVER(PARTITION BY Region ORDER BY Quantity DESC) AS \"Row Number\",\n  Product,\n  Quantity,\n  SUM(Quantity) OVER(PARTITION BY Region) AS Total,  \n  AVG(Quantity) OVER(PARTITION BY Region) AS Avg,  \n  COUNT(Quantity) OVER(PARTITION BY Region) AS Count,  \n  MIN(Quantity) OVER(PARTITION BY Region) AS Min,  \n  MAX(Quantity) OVER(PARTITION BY Region) AS Max,\n  Region\nFROM wwi_security.Sale\nWHERE Quantity <> 0  \nORDER BY Region;\nGO\n\n-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category-- PERCENTILE_CONT, PERCENTILE_DISC\nSELECT DISTINCT c.Category  \n,PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianCont  \n,PERCENTILE_DISC(0.5) WITHIN GROUP (ORDER BY bc.Downloads)\n                      OVER (PARTITION BY Category) AS MedianDisc  \nFROM dbo.Category AS c  \nINNER JOIN dbo.BookList AS bl\n    ON bl.CategoryID = c.ID\nINNER JOIN dbo.BookConsumption AS bc  \n    ON bc.BookID = bl.ID\nORDER BY Category\nGO\n\n--LAG Function\nSELECT ProductId,\n    [Hour],\n    [HourSalesTotal],\n    LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS PreviousHouseSalesTotal,\n    [HourSalesTotal] - LAG(HourSalesTotal,1,0) OVER (ORDER BY [Hour]) AS Diff\nFROM ( \n    SELECT ProductId,\n        [Hour],\n        SUM(TotalAmount) AS HourSalesTotal\n    FROM [wwi_perf].[Sale_Index]\n    WHERE ProductId = 3848 AND [Hour] BETWEEN 8 AND 20\n    GROUP BY ProductID, [Hour]) as HourTotals\nGO\n\n-- ROWS UNBOUNDED PRECEDING\nSELECT DISTINCT bc.Country, b.Title AS Book, bc.Downloads\n    ,FIRST_VALUE(b.Title) OVER (PARTITION BY Country  \n        ORDER BY Downloads ASC ROWS UNBOUNDED PRECEDING) AS FewestDownloads\nFROM dbo.BookConsumption AS bc\nINNER JOIN dbo.Books AS b\n    ON b.ID = bc.BookID\nORDER BY Country, Downloads\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E01T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "SELECT COUNT(DISTINCT CustomerId) from wwi_poc.Sale\nGO\n\nSELECT APPROX_COUNT_DISTINCT(CustomerId) from wwi_poc.Sale\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E02T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "--First, let's confirm that there are no queries currently being run by users logged in workload01 or workload02\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, \nstart_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') \n--and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,s.login_name\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,status\nGO\n\nIF EXISTS (SELECT * FROM sys.workload_management_workload_classifiers WHERE name = 'CEO')\nBEGIN\n    DROP WORKLOAD CLASSIFIER CEO;\nEND\nCREATE WORKLOAD CLASSIFIER CEO\n  WITH (WORKLOAD_GROUP = 'largerc'\n  ,MEMBERNAME = 'asa.sql.workload01',IMPORTANCE = High);\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s \nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload01','asa.sql.workload02') and Importance\nis not NULL AND r.[status] in ('Running','Suspended') and submit_time>dateadd(minute,-2,getdate())\nORDER BY submit_time ,status desc\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E02T03')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "IF NOT EXISTS (SELECT * FROM sys.workload_management_workload_groups where name = 'CEODemo')\nBEGIN\n    Create WORKLOAD GROUP CEODemo WITH  \n    ( MIN_PERCENTAGE_RESOURCE = 50        -- integer value\n    ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 25 --  \n    ,CAP_PERCENTAGE_RESOURCE = 100\n    )\nEND\nGO\n\nIF NOT EXISTS (SELECT * FROM sys.workload_management_workload_classifiers where  name = 'CEODreamDemo')\nBEGIN\n    Create Workload Classifier CEODreamDemo with\n    ( Workload_Group ='CEODemo',MemberName='asa.sql.workload02',IMPORTANCE = BELOW_NORMAL);\nEND\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s\nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload02') and Importance is not NULL AND r.[status] in ('Running','Suspended')\nORDER BY submit_time, status\nGO\n\nSELECT s.login_name, r.[Status], r.Importance, submit_time, start_time ,s.session_id FROM sys.dm_pdw_exec_sessions s\nJOIN sys.dm_pdw_exec_requests r ON s.session_id = r.session_id\nWHERE s.login_name IN ('asa.sql.workload02') and Importance is not NULL AND r.[status] in ('Running','Suspended')\nORDER BY submit_time, status\nGO\n\nIF  EXISTS (SELECT * FROM sys.workload_management_workload_classifiers where group_name = 'CEODemo')\nBEGIN\n    Drop Workload Classifier CEODreamDemo\n    DROP WORKLOAD GROUP CEODemo\nEND\n--- Creates a workload group 'CEODemo'.\nCreate  WORKLOAD GROUP CEODemo WITH  \n(\n    MIN_PERCENTAGE_RESOURCE = 26 -- integer value\n    ,REQUEST_MIN_RESOURCE_GRANT_PERCENT = 3.25 -- factor of 26 (guaranteed more than 4 concurrencies)\n    ,CAP_PERCENTAGE_RESOURCE = 100\n)\n--- Creates a workload Classifier 'CEODreamDemo'.\nCreate Workload Classifier CEODreamDemo with\n(Workload_Group ='CEODemo',MemberName='asa.sql.workload02',IMPORTANCE = BELOW_NORMAL);\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M10E03T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 10"
+				},
+				"content": {
+					"query": "SELECT  \n    COUNT_BIG(*)\nFROM\n    [wwi_poc].[Sale]\nGO\n\nSELECT TOP 1000 * FROM\n(\n    SELECT\n        S.CustomerId\n        ,SUM(S.TotalAmount) as TotalAmount\n    FROM\n        [wwi_poc].[Sale] S\n    GROUP BY\n        S.CustomerId\n) T\nOPTION (LABEL = 'Lab: Heap')\nGO\n\nSELECT  *\nFROM    sys.dm_pdw_exec_requests\nWHERE   [label] = 'Lab: Heap';\nGO\n\nCREATE TABLE [wwi_poc].[Sale]\n( \n    [TransactionId] [uniqueidentifier]  NOT NULL,\n    [CustomerId] [int]  NOT NULL,\n    [ProductId] [smallint]  NOT NULL,\n    [Quantity] [tinyint]  NOT NULL,\n    [Price] [decimal](9,2)  NOT NULL,\n    [TotalAmount] [decimal](9,2)  NOT NULL,\n    [TransactionDateId] [int]  NOT NULL,\n    [ProfitAmount] [decimal](9,2)  NOT NULL,\n    [Hour] [tinyint]  NOT NULL,\n    [Minute] [tinyint]  NOT NULL,\n    [StoreId] [smallint]  NOT NULL\n)\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    HEAP\n)\nGO\n\nEXPLAIN WITH_RECOMMENDATIONS\nSELECT TOP 1000 * FROM\n(\n    SELECT\n        S.CustomerId\n        ,SUM(S.TotalAmount) as TotalAmount\n    FROM\n        [wwi_poc].[Sale] S\n    GROUP BY\n        S.CustomerId\n) T\nGO\n\nSELECT  \n    *\nFROM    \n    sys.dm_pdw_exec_requests\nWHERE   \n    [label] = 'Lab: Heap'\nGO\n\n-- DECLARE @reqid NVARCHAR(MAX)\n\n\n-- SELECT  \n--     top(1) @reqid=request_id\n-- FROM    \n--     sys.dm_pdw_exec_requests\n-- WHERE   \n--     [label] = 'Lab: Heap'\n-- GO\n\nSELECT\n   *\nFROM\n    sys.dm_pdw_request_steps\nWHERE\n    request_id = 'QID4179'\nAND\n   step_index\n\n\nSELECT  *\nFROM\n    sys.dm_pdw_sql_requests\nWHERE\n    request_id = 'QID4179'\nAND\n   step_index = 2\nGO\n\nSELECT\n    *\nFROM\n    sys.dm_pdw_dms_workers\nWHERE\n    request_id = 'QID4179'\n    AND step_index = 2\nORDER BY\n    distribution_id\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E01T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "IF OBJECT_ID(N'[wwi_perf].[Sale_Hash]', N'U') IS NULL\nBEGIN\n   CREATE TABLE [wwi_perf].[Sale_Hash]\n   WITH\n   (\n       DISTRIBUTION = HASH ( [CustomerId] ),\n       CLUSTERED COLUMNSTORE INDEX\n   )\n   AS\n   SELECT\n       *\n   FROM\n       [wwi_poc].[Sale]\nEND\nGO\n\nDBCC PDW_SHOWSPACEUSED('wwi_perf.Sale_Hash');\nGO\n\nSELECT TOP 1000\n    CustomerId,\n    count(*) as TransactionItemsCount\nFROM\n    [wwi_perf].[Sale_Hash]\nGROUP BY\n    CustomerId\nORDER BY\n    count(*) ASC\nGO\n\nSELECT\n    T.TransactionItemsCountBucket\n    ,count(*) as CustomersCount\nFROM\n    (\n        SELECT\n            CustomerId,\n            (count(*) - 62) / 100 as TransactionItemsCountBucket\n        FROM\n            [wwi_perf].[Sale_Hash]\n        GROUP BY\n            CustomerId\n    ) T\nGROUP BY\n    T.TransactionItemsCountBucket\nORDER BY\n    T.TransactionItemsCountBucket\n\nGO\n\n\nSELECT  \n    *\nFROM    \n    sys.dm_pdw_exec_requests\nWHERE   \n    [label] = 'Lab: Heap'\n\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E01T02')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "CREATE VIEW [wwi_perf].[vTableSizes]\nAS\nWITH base\nAS\n(\nSELECT\n    GETDATE()                                                              AS  [execution_time]\n    , DB_NAME()                                                            AS  [database_name]\n    , s.name                                                               AS  [schema_name]\n    , t.name                                                               AS  [table_name]\n    , QUOTENAME(s.name)+'.'+QUOTENAME(t.name)                              AS  [two_part_name]\n    , nt.[name]                                                            AS  [node_table_name]\n    , ROW_NUMBER() OVER(PARTITION BY nt.[name] ORDER BY (SELECT NULL))     AS  [node_table_name_seq]\n    , tp.[distribution_policy_desc]                                        AS  [distribution_policy_name]\n    , c.[name]                                                             AS  [distribution_column]\n    , nt.[distribution_id]                                                 AS  [distribution_id]\n    , i.[type]                                                             AS  [index_type]\n    , i.[type_desc]                                                        AS  [index_type_desc]\n    , nt.[pdw_node_id]                                                     AS  [pdw_node_id]\n    , pn.[type]                                                            AS  [pdw_node_type]\n    , pn.[name]                                                            AS  [pdw_node_name]\n    , di.name                                                              AS  [dist_name]\n    , di.position                                                          AS  [dist_position]\n    , nps.[partition_number]                                               AS  [partition_nmbr]\n    , nps.[reserved_page_count]                                            AS  [reserved_space_page_count]\n    , nps.[reserved_page_count] - nps.[used_page_count]                    AS  [unused_space_page_count]\n    , nps.[in_row_data_page_count]\n        + nps.[row_overflow_used_page_count]\n        + nps.[lob_used_page_count]                                        AS  [data_space_page_count]\n    , nps.[reserved_page_count]\n    - (nps.[reserved_page_count] - nps.[used_page_count])\n    - ([in_row_data_page_count]\n            + [row_overflow_used_page_count]+[lob_used_page_count])        AS  [index_space_page_count]\n    , nps.[row_count]                                                      AS  [row_count]\nFROM\n    sys.schemas s\nINNER JOIN sys.tables t\n    ON s.[schema_id] = t.[schema_id]\nINNER JOIN sys.indexes i\n    ON  t.[object_id] = i.[object_id]\n    AND i.[index_id] <= 1\nINNER JOIN sys.pdw_table_distribution_properties tp\n    ON t.[object_id] = tp.[object_id]\nINNER JOIN sys.pdw_table_mappings tm\n    ON t.[object_id] = tm.[object_id]\nINNER JOIN sys.pdw_nodes_tables nt\n    ON tm.[physical_name] = nt.[name]\nINNER JOIN sys.dm_pdw_nodes pn\n    ON  nt.[pdw_node_id] = pn.[pdw_node_id]\nINNER JOIN sys.pdw_distributions di\n    ON  nt.[distribution_id] = di.[distribution_id]\nINNER JOIN sys.dm_pdw_nodes_db_partition_stats nps\n    ON nt.[object_id] = nps.[object_id]\n    AND nt.[pdw_node_id] = nps.[pdw_node_id]\n    AND nt.[distribution_id] = nps.[distribution_id]\nLEFT OUTER JOIN (select * from sys.pdw_column_distribution_properties where distribution_ordinal = 1) cdp\n    ON t.[object_id] = cdp.[object_id]\nLEFT OUTER JOIN sys.columns c\n    ON cdp.[object_id] = c.[object_id]\n    AND cdp.[column_id] = c.[column_id]\nWHERE pn.[type] = 'COMPUTE'\n)\n, size\nAS\n(\nSELECT\n[execution_time]\n,  [database_name]\n,  [schema_name]\n,  [table_name]\n,  [two_part_name]\n,  [node_table_name]\n,  [node_table_name_seq]\n,  [distribution_policy_name]\n,  [distribution_column]\n,  [distribution_id]\n,  [index_type]\n,  [index_type_desc]\n,  [pdw_node_id]\n,  [pdw_node_type]\n,  [pdw_node_name]\n,  [dist_name]\n,  [dist_position]\n,  [partition_nmbr]\n,  [reserved_space_page_count]\n,  [unused_space_page_count]\n,  [data_space_page_count]\n,  [index_space_page_count]\n,  [row_count]\n,  ([reserved_space_page_count] * 8.0)                                 AS [reserved_space_KB]\n,  ([reserved_space_page_count] * 8.0)/1000                            AS [reserved_space_MB]\n,  ([reserved_space_page_count] * 8.0)/1000000                         AS [reserved_space_GB]\n,  ([reserved_space_page_count] * 8.0)/1000000000                      AS [reserved_space_TB]\n,  ([unused_space_page_count]   * 8.0)                                 AS [unused_space_KB]\n,  ([unused_space_page_count]   * 8.0)/1000                            AS [unused_space_MB]\n,  ([unused_space_page_count]   * 8.0)/1000000                         AS [unused_space_GB]\n,  ([unused_space_page_count]   * 8.0)/1000000000                      AS [unused_space_TB]\n,  ([data_space_page_count]     * 8.0)                                 AS [data_space_KB]\n,  ([data_space_page_count]     * 8.0)/1000                            AS [data_space_MB]\n,  ([data_space_page_count]     * 8.0)/1000000                         AS [data_space_GB]\n,  ([data_space_page_count]     * 8.0)/1000000000                      AS [data_space_TB]\n,  ([index_space_page_count]  * 8.0)                                   AS [index_space_KB]\n,  ([index_space_page_count]  * 8.0)/1000                              AS [index_space_MB]\n,  ([index_space_page_count]  * 8.0)/1000000                           AS [index_space_GB]\n,  ([index_space_page_count]  * 8.0)/1000000000                        AS [index_space_TB]\nFROM base\n)\nSELECT *\nFROM size\nGO\n\nSELECT\n    schema_name\n,    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\n,    COUNT(distinct partition_nmbr) as nbr_partitions\n,    SUM(row_count)                 as table_row_count\n,    SUM(reserved_space_GB)         as table_reserved_space_GB\n,    SUM(data_space_GB)             as table_data_space_GB\n,    SUM(index_space_GB)            as table_index_space_GB\n,    SUM(unused_space_GB)           as table_unused_space_GB\nFROM\n    [wwi_perf].[vTableSizes]\nWHERE\n    schema_name = 'wwi_perf' OR (schema_name = 'wwi_poc' AND table_name = 'sale')\nGROUP BY\n    database_name\n,    schema_name\n,    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\nORDER BY\n    table_reserved_space_GB desc",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E02T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "create view [wwi_perf].[vColumnStoreRowGroupStats]\nas\nwith cte\nas\n(\nselect   tb.[name]                    AS [logical_table_name]\n,        rg.[row_group_id]            AS [row_group_id]\n,        rg.[state]                   AS [state]\n,        rg.[state_desc]              AS [state_desc]\n,        rg.[total_rows]              AS [total_rows]\n,        rg.[trim_reason_desc]        AS trim_reason_desc\n,        mp.[physical_name]           AS physical_name\nFROM    sys.[schemas] sm\nJOIN    sys.[tables] tb               ON  sm.[schema_id]          = tb.[schema_id]\nJOIN    sys.[pdw_table_mappings] mp   ON  tb.[object_id]          = mp.[object_id]\nJOIN    sys.[pdw_nodes_tables] nt     ON  nt.[name]               = mp.[physical_name]\nJOIN    sys.[dm_pdw_nodes_db_column_store_row_group_physical_stats] rg      ON  rg.[object_id]     = nt.[object_id]\n                                                                            AND rg.[pdw_node_id]   = nt.[pdw_node_id]\n                                        AND rg.[distribution_id]    = nt.[distribution_id]\n)\nselect *\nfrom cte;\nGO\n\nSELECT\n    *\nFROM\n    [wwi_perf].[vColumnStoreRowGroupStats]\nWHERE\n    Logical_Table_Name = 'Sale_Partition01'\nGO\n\nSELECT\n    *\nFROM\n    [wwi_perf].[vColumnStoreRowGroupStats]\nWHERE\n    Logical_Table_Name = 'Sale_Hash_Ordered'\n",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E03T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "CREATE TABLE [wwi_perf].[Sale_Hash_Projection]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tHEAP\n)\nAS\nSELECT\n\t[CustomerId]\n\t,[ProductId]\n\t,[Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection2]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tCLUSTERED COLUMNSTORE INDEX\n)\nAS\nSELECT\n\t[CustomerId]\n\t,[ProductId]\n\t,[Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\nGO\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection_Big]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tHEAP\n)\nAS\nSELECT\n\t[CustomerId]\n\t,CAST([ProductId] as bigint) as [ProductId]\n\t,CAST([Quantity] as bigint) as [Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\n\nCREATE TABLE [wwi_perf].[Sale_Hash_Projection_Big2]\nWITH\n(\n\tDISTRIBUTION = HASH ( [CustomerId] ),\n\tCLUSTERED COLUMNSTORE INDEX\n)\nAS\nSELECT\n\t[CustomerId]\n\t,CAST([ProductId] as bigint) as [ProductId]\n\t,CAST([Quantity] as bigint) as [Quantity]\nFROM\n\t[wwi_perf].[Sale_Hash_Ordered]\nGO\n\nSELECT 'Sale_Hash_Projection', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection]\nUNION\nSELECT 'Sale_Hash_Projection2', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection2]\nUNION\nSELECT 'Sale_Hash_Projection_Big', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection_Big]\nUNION\nSELECT 'Sale_Hash_Projection_Big2', COUNT_BIG(*) FROM [wwi_perf].[Sale_Hash_Projection_Big2]\nGO\n\nSELECT\n    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\n,    COUNT(distinct partition_nmbr) as nbr_partitions\n,    SUM(row_count)                 as table_row_count\n,    SUM(reserved_space_GB)         as table_reserved_space_GB\n,    SUM(data_space_GB)             as table_data_space_GB\n,    SUM(index_space_GB)            as table_index_space_GB\n,    SUM(unused_space_GB)           as table_unused_space_GB\nFROM\n    [wwi_perf].[vTableSizes]\nWHERE\n    schema_name = 'wwi_perf'\n    and table_name in ('Sale_Hash_Projection', 'Sale_Hash_Projection2',\n        'Sale_Hash_Projection_Big', 'Sale_Hash_Projection_Big2')\nGROUP BY\n    database_name\n,    schema_name\n,    table_name\n,    distribution_policy_name\n,      distribution_column\n,    index_type_desc\nORDER BY\n    table_data_space_GB desc",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E04T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "SELECT\n    T.TransactionItemsCountBucket\n    ,count(*) as CustomersCount\nFROM\n    (\n        SELECT\n            CustomerId,\n            (count(*) - 184) / 100 as TransactionItemsCountBucket\n        FROM\n            [wwi_perf].[Sale_Hash]\n        GROUP BY\n            CustomerId\n    ) T\nGROUP BY\n    T.TransactionItemsCountBucket\nORDER BY\n    T.TransactionItemsCountBucket\nGO\n\nEXPLAIN WITH_RECOMMENDATIONS\nSELECT\n    T.TransactionItemsCountBucket\n    ,count(*) as CustomersCount\nFROM\n    (\n        SELECT\n            CustomerId,\n            (\n                COUNT(*) -\n                (\n                    SELECT\n                        MIN(TransactionItemsCount)\n                    FROM\n                    (\n                        SELECT\n                            COUNT(*) as TransactionItemsCount\n                        FROM\n                            [wwi_perf].[Sale_Hash]\n                        GROUP BY\n                            CustomerId\n                    ) X\n                )\n            ) / 100 as TransactionItemsCountBucket\n        FROM\n            [wwi_perf].[Sale_Hash]\n        GROUP BY\n            CustomerId\n    ) T\nGROUP BY\n    T.TransactionItemsCountBucket\nORDER BY\n    T.TransactionItemsCountBucket\nGO\n\nCREATE MATERIALIZED VIEW\n    mvTransactionItemsCounts\nWITH\n(\n    DISTRIBUTION = HASH([CustomerId])\n)\nAS\nSELECT\n    CustomerId\n    ,COUNT(*) AS ItemsCount\nFROM\n    [wwi_perf].[Sale_Hash]\nGROUP BY CustomerId",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/M11E05T01')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 11"
+				},
+				"content": {
+					"query": "CREATE TABLE [wwi_perf].[Sale_Hash_v2]\nWITH\n(\n    DISTRIBUTION = ROUND_ROBIN,\n    HEAP\n)\nAS\nSELECT\n    *\nFROM\n    [wwi_perf].[Sale_Hash]\nWHERE\n    CustomerId >= 900000",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"poolName": "SQLPool01",
+						"databaseName": "SQLPool01"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/Calculate Top 5 Products')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Module 09"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "SparkPool01",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"synapse_widget": {
+						"version": "0.1",
+						"state": {
+							"8c783826-65a9-4e42-a096-f24e0f2d2a16": {
+								"type": "Synapse.DataFrame",
+								"sync_state": {
+									"table": {
+										"rows": [
+											{
+												"visitorId": 80451,
+												"isPreferredProduct": false,
+												"productId": 1815,
+												"itemsPurchasedLast12Months": 46,
+												"userId": 80451,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 626,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3388,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3467,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 1998,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 665,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 924,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 1546,
+												"isPreferredProduct": true,
+												"productId": 2973,
+												"itemsPurchasedLast12Months": 15,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 626,
+												"isPreferredProduct": true,
+												"productId": 2156,
+												"itemsPurchasedLast12Months": 31,
+												"userId": 80579,
+												"isTopProduct": true
+											},
+											{
+												"visitorId": 80579,
+												"preferredProductId": 3388,
+												"isPreferredProduct": true,
+												"productId": 2156,
+												"itemsPurchasedLast12Months": 31,
+												"userId": 80579,
+												"isTopProduct": true
+											}
+										],
+										"schema": {
+											"visitorId": "int",
+											"productId": "int",
+											"itemsPurchasedLast12Months": "int",
+											"preferredProductId": "int",
+											"userId": "int",
+											"isTopProduct": "boolean",
+											"isPreferredProduct": "boolean"
+										}
+									},
+									"isSummary": false,
+									"language": "scala"
+								},
+								"persist_state": {
+									"view": {
+										"type": "details",
+										"chartOptions": {
+											"chartType": "bar",
+											"aggregationType": "sum",
+											"categoryFieldKeys": [
+												"productId"
+											],
+											"seriesFieldKeys": [
+												"visitorId"
+											],
+											"isStacked": false
+										}
+									}
+								}
+							}
+						}
+					},
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/bcb37011-c12a-48b8-a476-f3bd7895ffd6/resourceGroups/rg-dp-203-03/providers/Microsoft.Synapse/workspaces/asaworkspacedp210504/bigDataPools/SparkPool01",
+						"name": "SparkPool01",
+						"type": "Spark",
+						"endpoint": "https://asaworkspacedp210504.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/SparkPool01",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "2.4",
+						"nodeCount": 3,
+						"cores": 4,
+						"memory": 28
+					}
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"df = spark.read.load('abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net/top-products/*.parquet', format='parquet')\r\n",
+							"display(df.limit(10))"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true
+						},
+						"source": [
+							"topPurchases = df.select(\r\n",
+							"    \"UserId\", \"ProductId\",\r\n",
+							"    \"ItemsPurchasedLast12Months\", \"IsTopProduct\",\r\n",
+							"    \"IsPreferredProduct\")\r\n",
+							"\r\n",
+							"# Populate a temporary view so we can query from SQL\r\n",
+							"topPurchases.createOrReplaceTempView(\"top_purchases\")\r\n",
+							"\r\n",
+							"topPurchases.show(100)"
+						],
+						"outputs": [],
+						"execution_count": 2
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true
+						},
+						"source": [
+							"from pyspark.sql.functions import *\r\n",
+							"\r\n",
+							"topPreferredProducts = (topPurchases\r\n",
+							"    .filter( col(\"IsTopProduct\") == True)\r\n",
+							"    .filter( col(\"IsPreferredProduct\") == True)\r\n",
+							"    .orderBy( col(\"ItemsPurchasedLast12Months\").desc() ))\r\n",
+							"\r\n",
+							"topPreferredProducts.show(100)"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {
+								"language": "sparksql"
+							},
+							"collapsed": false
+						},
+						"source": [
+							"%%sql\r\n",
+							"\r\n",
+							"CREATE OR REPLACE TEMPORARY VIEW top_5_products\r\n",
+							"AS\r\n",
+							"    select UserId, ProductId, ItemsPurchasedLast12Months\r\n",
+							"    from (select *,\r\n",
+							"                row_number() over (partition by UserId order by ItemsPurchasedLast12Months desc) as seqnum\r\n",
+							"        from top_purchases\r\n",
+							"        ) a\r\n",
+							"    where seqnum <= 5 and IsTopProduct == true and IsPreferredProduct = true\r\n",
+							"    order by a.UserId"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true
+						},
+						"source": [
+							"top5Products = sqlContext.table(\"top_5_products\")\r\n",
+							"\r\n",
+							"top5Products.show(100)"
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true
+						},
+						"source": [
+							"print('before filter: ', topPreferredProducts.count(), ', after filter: ', top5Products.count())"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true
+						},
+						"source": [
+							"top5ProductsOverall = (top5Products.select(\"ProductId\",\"ItemsPurchasedLast12Months\")\r\n",
+							"    .groupBy(\"ProductId\")\r\n",
+							"    .agg( sum(\"ItemsPurchasedLast12Months\").alias(\"Total\") )\r\n",
+							"    .orderBy( col(\"Total\").desc() )\r\n",
+							"    .limit(5))\r\n",
+							"\r\n",
+							"top5ProductsOverall.show()"
+						],
+						"outputs": [],
+						"execution_count": 7
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"collapsed": true,
+							"tags": [
+								"parameters"
+							]
+						},
+						"source": [
+							"import uuid\r\n",
+							"\r\n",
+							"# Generate random GUID\r\n",
+							"runId = uuid.uuid4()"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							},
+							"microsoft": {
+								"language": "python"
+							},
+							"collapsed": true
+						},
+						"source": [
+							"%%pyspark\r\n",
+							"\r\n",
+							"top5ProductsOverall.write.parquet('abfss://wwi-02@asadatalakedp210504.dfs.core.windows.net/top5-products/' + str(runId) + '.parquet')"
+						],
+						"outputs": [],
+						"execution_count": 9
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/SQLPool01')]",
 			"type": "Microsoft.Synapse/workspaces/sqlPools",
 			"apiVersion": "2019-06-01-preview",
@@ -244,6 +2698,20 @@
 			},
 			"dependsOn": [],
 			"location": "southcentralus"
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/handson_powerbi')]",
+			"type": "Microsoft.Synapse/workspaces/linkedServices",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": [],
+				"type": "PowerBIWorkspace",
+				"typeProperties": {
+					"workspaceID": "5bdd6b19-2f32-44c7-a4af-36b7f3197bca",
+					"tenantID": "47d4d35f-96b3-4604-91c5-c19c751d9da1"
+				}
+			},
+			"dependsOn": []
 		}
 	]
 }
