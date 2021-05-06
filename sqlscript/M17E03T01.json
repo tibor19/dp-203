@@ -1,0 +1,20 @@
+{
+	"name": "M17E03T01",
+	"properties": {
+		"folder": {
+			"name": "Module 17"
+		},
+		"content": {
+			"query": "DROP DATABASE IF EXISTS demo;\nGO\n\nCREATE DATABASE demo;\nGO\n\nUSE demo;\nGO\n\nCREATE VIEW [2019Q1Sales] AS\nSELECT\n    SUBSTRING(result.filename(), 12, 4) as Year\n    ,SUBSTRING(result.filename(), 16, 2) as Month\n    ,SUBSTRING(result.filename(), 18, 2) as Day\n    ,SUM(TotalAmount) as TotalAmount\n    ,SUM(ProfitAmount) as ProfitAmount\n    ,COUNT(*) as TransactionsCount\nFROM\n    OPENROWSET(\n        BULK 'https://asadatalake356813.dfs.core.windows.net/wwi-02/sale-small/Year=2019/Quarter=Q1/Month=1/*/*.parquet',\n        FORMAT='PARQUET'\n    ) AS [result]\nGROUP BY\n    [result].filename()\nGO\n\nUSE demo;\n\nSELECT TOP (100) [Year]\n,[Month]\n,[Day]\n,[TotalAmount]\n,[ProfitAmount]\n,[TransactionsCount]\nFROM [dbo].[2019Q1Sales]\n",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "Built-in",
+				"databaseName": "demo"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
