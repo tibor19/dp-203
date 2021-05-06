@@ -1,0 +1,20 @@
+{
+	"name": "M17E02T03",
+	"properties": {
+		"folder": {
+			"name": "Module 17"
+		},
+		"content": {
+			"query": "SELECT\n    name\n    ,is_result_set_caching_on\nFROM\n    sys.databases\nGO\n\nSET RESULT_SET_CACHING ON\n\nALTER DATABASE [SQLPool01] SET RESULT_SET_CACHING ON\nGO",
+			"metadata": {
+				"language": "sql"
+			},
+			"currentConnection": {
+				"poolName": "SQLPool01",
+				"databaseName": "SQLPool01"
+			},
+			"resultLimit": 5000
+		},
+		"type": "SqlQuery"
+	}
+}
