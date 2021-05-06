@@ -1,8 +1,8 @@
 {
-	"name": "M17E02T02",
+	"name": "M16E02T02",
 	"properties": {
 		"folder": {
-			"name": "Module 17"
+			"name": "Module 16"
 		},
 		"content": {
 			"query": "EXPLAIN\nSELECT * FROM\n(\n    SELECT\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n    ,avg(FS.TotalAmount) as AvgTotalAmount\n    ,avg(FS.ProfitAmount) as AvgProfitAmount\n    ,sum(FS.TotalAmount) as TotalAmount\n    ,sum(FS.ProfitAmount) as ProfitAmount\nFROM\n    wwi.SaleSmall FS\n    JOIN wwi.Product P ON P.ProductId = FS.ProductId\n    JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\nGROUP BY\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n) T\nGO\n\nIF EXISTS(select * FROM sys.views where name = 'mvCustomerSales')\n    DROP VIEW wwi_perf.mvCustomerSales\n    GO\n\nCREATE MATERIALIZED VIEW\n    wwi_perf.mvCustomerSales\nWITH\n(\n    DISTRIBUTION = HASH( CustomerId )\n)\nAS\nSELECT\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\n    ,avg(FS.TotalAmount) as AvgTotalAmount\n    ,avg(FS.ProfitAmount) as AvgProfitAmount\n    ,sum(FS.TotalAmount) as TotalAmount\n    ,sum(FS.ProfitAmount) as ProfitAmount\nFROM\n    wwi.SaleSmall FS\n    JOIN wwi.Product P ON P.ProductId = FS.ProductId\n    JOIN wwi.Date D ON FS.TransactionDateId = D.DateId\nGROUP BY\n    FS.CustomerID\n    ,P.Seasonality\n    ,D.Year\n    ,D.Quarter\n    ,D.Month\nGO",
