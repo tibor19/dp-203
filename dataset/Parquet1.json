@@ -1,0 +1,72 @@
+{
+	"name": "Parquet1",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "asaworkspaceid8n34x-WorkspaceDefaultStorage",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "sale-small-20191231-snappy.parquet",
+				"folderPath": "sale-small/Year=2019/Quarter=Q4/Month=12/Day=20191231",
+				"fileSystem": "wwi-02"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": [
+			{
+				"name": "TransactionId",
+				"type": "UTF8"
+			},
+			{
+				"name": "CustomerId",
+				"type": "INT32"
+			},
+			{
+				"name": "ProductId",
+				"type": "INT_16"
+			},
+			{
+				"name": "Quantity",
+				"type": "INT_8"
+			},
+			{
+				"name": "Price",
+				"type": "DECIMAL",
+				"precision": 38,
+				"scale": 18
+			},
+			{
+				"name": "TotalAmount",
+				"type": "DECIMAL",
+				"precision": 38,
+				"scale": 18
+			},
+			{
+				"name": "TransactionDate",
+				"type": "INT32"
+			},
+			{
+				"name": "ProfitAmount",
+				"type": "DECIMAL",
+				"precision": 38,
+				"scale": 18
+			},
+			{
+				"name": "Hour",
+				"type": "INT_8"
+			},
+			{
+				"name": "Minute",
+				"type": "INT_8"
+			},
+			{
+				"name": "StoreId",
+				"type": "INT_16"
+			}
+		]
+	}
+}
